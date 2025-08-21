@@ -115,6 +115,7 @@ export default function ContributionCalendarWrapper({
   const [padding, setPadding] = useState(32);
   const [borderRadius, setBorderRadius] = useState(16);
   const [showWindowControls, setShowWindowControls] = useState(true);
+  const [generatedSVG, setGeneratedSVG] = useState<string>('');
   const calendarRef = useRef<HTMLDivElement>(null);
 
   const theme = colorConfig.themes[currentTheme];
@@ -122,31 +123,147 @@ export default function ContributionCalendarWrapper({
 
   // Color mapping based on contribution level (0-4)
   const getColor = (level: number) => {
-    return colorConfig.contributionColors[currentTheme][level] || colorConfig.contributionColors[currentTheme][0];
+    return (
+      colorConfig.contributionColors[currentTheme][level] ||
+      colorConfig.contributionColors[currentTheme][0]
+    );
   };
 
   const getBackgroundColor = () => {
-    return colorConfig.backgrounds[currentBackground] || '#f8fafc';
+    return theme.background;
   };
 
-  const createSVGFromCanvas = (canvas: HTMLCanvasElement): string => {
-    const svgNS = 'http://www.w3.org/2000/svg';
-    const svg = document.createElementNS(svgNS, 'svg');
-    const width = canvas.width;
-    const height = canvas.height;
+  // Generate SVG from calendar data
+  const generateSVG = () => {
+    const totalWidth = gridCols * squareSize + 60; // Extra space for labels
+    const totalHeight = gridRows * squareSize + 120; // Extra space for title and legend
 
-    svg.setAttribute('width', width.toString());
-    svg.setAttribute('height', height.toString());
-    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    let svg = `<svg width="${totalWidth}" height="${totalHeight}" xmlns="http://www.w3.org/2000/svg">`;
 
-    // Create image element
-    const image = document.createElementNS(svgNS, 'image');
-    image.setAttribute('width', width.toString());
-    image.setAttribute('height', height.toString());
-    image.setAttribute('href', canvas.toDataURL('image/png'));
+    // Define gradients and patterns
+    if (currentBackground === 'gradient-blue') {
+      svg += `<defs>
+        <linearGradient id="bg-gradient-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#e0f2fe;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#bfdbfe;stop-opacity:1" />
+        </linearGradient>
+      </defs>`;
+    } else if (currentBackground === 'gradient-purple') {
+      svg += `<defs>
+        <linearGradient id="bg-gradient-purple" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#f3e8ff;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#e9d5ff;stop-opacity:1" />
+        </linearGradient>
+      </defs>`;
+    } else if (currentBackground === 'gradient-green') {
+      svg += `<defs>
+        <linearGradient id="bg-gradient-green" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#dcfce7;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#bbf7d0;stop-opacity:1" />
+        </linearGradient>
+      </defs>`;
+    } else if (currentBackground === 'gradient-orange') {
+      svg += `<defs>
+        <linearGradient id="bg-gradient-orange" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#fff7ed;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#fed7aa;stop-opacity:1" />
+        </linearGradient>
+      </defs>`;
+    } else if (currentBackground === 'mesh') {
+      svg += `<defs>
+        <pattern id="mesh-pattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+          <circle cx="1" cy="1" r="1" fill="rgba(0,0,0,0.05)" />
+        </pattern>
+      </defs>`;
+    } else if (currentBackground === 'dots') {
+      svg += `<defs>
+        <pattern id="dots-pattern" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+          <circle cx="12" cy="12" r="1" fill="rgba(0,0,0,0.1)" />
+        </pattern>
+      </defs>`;
+    }
 
-    svg.appendChild(image);
-    return svg.outerHTML;
+    // Background
+    const backgroundFill = getBackgroundColor();
+
+    svg += `<rect width="100%" height="100%" fill="${backgroundFill}" rx="${borderRadius}" ry="${borderRadius}"/>`;
+
+    // Title
+    svg += `<text x="${
+      totalWidth / 2
+    }" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="${
+      theme.text
+    }">Contribution Activity</text>`;
+
+    // Side labels
+    const sideLabels = orientation === 'horizontal' ? weekdays : months;
+    sideLabels.forEach((label, index) => {
+      if (index % (orientation === 'horizontal' ? 2 : 1) === 0) {
+        const y = 60 + index * squareSize + squareSize / 2;
+        svg += `<text x="25" y="${
+          y + 4
+        }" text-anchor="end" font-family="monospace" font-size="10" fill="${
+          theme.text
+        }" opacity="0.7">${label}</text>`;
+      }
+    });
+
+    // Top labels
+    const topLabels = orientation === 'horizontal' ? months : weekdays;
+    topLabels.forEach((label, index) => {
+      if (
+        (orientation === 'horizontal' && index % 2 === 0) ||
+        (orientation === 'vertical' && index % 3 === 0)
+      ) {
+        const x =
+          40 +
+          (index * (orientation === 'horizontal' ? 4.4 : 7.5) * squareSize) /
+            (orientation === 'horizontal' ? 1 : 1);
+        svg += `<text x="${x}" y="55" text-anchor="start" font-family="monospace" font-size="10" fill="${theme.text}" opacity="0.7">${label}</text>`;
+      }
+    });
+
+    // Contribution squares
+    gridData.forEach((row, rowIndex) => {
+      row.forEach((level, colIndex) => {
+        const x = 40 + colIndex * squareSize;
+        const y = 60 + rowIndex * squareSize;
+        const color = getColor(level);
+        svg += `<rect x="${x}" y="${y}" width="${squareSize - 1}" height="${
+          squareSize - 1
+        }" fill="${color}" rx="2" ry="2"/>`;
+      });
+    });
+
+    // Legend
+    const legendY = totalHeight - 50;
+    svg += `<text x="25" y="${
+      legendY + 12
+    }" text-anchor="start" font-family="monospace" font-size="10" fill="${
+      theme.text
+    }" opacity="0.6">Less</text>`;
+
+    [0, 1, 2, 3, 4].forEach((level, index) => {
+      const x = 60 + index * 20;
+      const color = getColor(level);
+      svg += `<rect x="${x}" y="${legendY}" width="16" height="16" fill="${color}" rx="2" ry="2"/>`;
+    });
+
+    svg += `<text x="${60 + 5 * 20 + 10}" y="${
+      legendY + 12
+    }" text-anchor="start" font-family="monospace" font-size="10" fill="${
+      theme.text
+    }" opacity="0.6">More</text>`;
+
+    // Footer
+    svg += `<text x="${totalWidth / 2}" y="${
+      totalHeight - 15
+    }" text-anchor="middle" font-family="monospace" font-size="10" fill="${
+      theme.text
+    }" opacity="0.4">Generated with GitFlex</text>`;
+
+    svg += '</svg>';
+    return svg;
   };
 
   const exportCalendar = async () => {
@@ -162,31 +279,31 @@ export default function ContributionCalendarWrapper({
         exportBtn.disabled = true;
       }
 
-      // Use html2canvas with safer settings to create the canvas
-      const canvas = await html2canvas(calendarRef.current, {
-        backgroundColor: getBackgroundColor(),
-        scale: 2, // Higher quality
-        useCORS: true,
-        allowTaint: true,
-      });
-
-      // Create download link
-      if (exportFormat === 'png') {
-        const dataUrl = canvas.toDataURL('image/png', 1.0);
-        const link = document.createElement('a');
-        link.download = `contribution-calendar-${Date.now()}.png`;
-        link.href = dataUrl;
-        link.click();
-      } else {
-        // For SVG, create a simple SVG representation
-        const svgData = createSVGFromCanvas(canvas);
-        const blob = new Blob([svgData], { type: 'image/svg+xml' });
+      if (exportFormat === 'svg') {
+        // Generate and download SVG
+        const svgContent = generateSVG();
+        const blob = new Blob([svgContent], { type: 'image/svg+xml' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.download = `contribution-calendar-${Date.now()}.svg`;
         link.href = url;
         link.click();
         URL.revokeObjectURL(url);
+      } else {
+        // Use html2canvas with safer settings to create the canvas
+        const canvas = await html2canvas(calendarRef.current, {
+          backgroundColor: getBackgroundColor(),
+          scale: 2, // Higher quality
+          useCORS: true,
+          allowTaint: true,
+        });
+
+        // Create download link
+        const dataUrl = canvas.toDataURL('image/png', 1.0);
+        const link = document.createElement('a');
+        link.download = `contribution-calendar-${Date.now()}.png`;
+        link.href = dataUrl;
+        link.click();
       }
 
       // Reset button state
@@ -207,6 +324,12 @@ export default function ContributionCalendarWrapper({
         exportBtn.disabled = false;
       }
     }
+  };
+
+  // Generate and display SVG
+  const handleGenerateSVG = () => {
+    const svgContent = generateSVG();
+    setGeneratedSVG(svgContent);
   };
 
   const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -251,7 +374,7 @@ export default function ContributionCalendarWrapper({
     <div className={`min-h-screen p-4 ${background}`}>
       {/* Header */}
       <div
-        className="p-4 print:hidden rounded-t-lg border"
+        className='p-4 print:hidden rounded-t-lg border'
         style={{
           backgroundColor: theme.header,
           color: theme.text,
@@ -262,9 +385,25 @@ export default function ContributionCalendarWrapper({
           <h1 className='text-xl font-bold'>GitHub Contribution Calendar</h1>
           <div className='flex items-center gap-2'>
             <button
+              onClick={handleGenerateSVG}
+              className='px-3 py-1 rounded text-sm'
+              style={{
+                backgroundColor: theme.button,
+                color: theme.buttonText,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = theme.buttonHover;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = theme.button;
+              }}
+            >
+              Generate SVG
+            </button>
+            <button
               onClick={exportCalendar}
               data-export-btn
-              className="px-3 py-1 rounded text-sm"
+              className='px-3 py-1 rounded text-sm'
               style={{
                 backgroundColor: theme.button,
                 color: theme.buttonText,
@@ -284,7 +423,7 @@ export default function ContributionCalendarWrapper({
 
       {/* Controls */}
       <div
-        className="print:hidden p-4 border-l border-r border-b rounded-b-lg mb-6"
+        className='print:hidden p-4 border-l border-r border-b rounded-b-lg mb-6'
         style={{
           backgroundColor: theme.background,
           color: theme.text,
@@ -298,7 +437,9 @@ export default function ContributionCalendarWrapper({
             <select
               value={currentTheme}
               onChange={(e) =>
-                setCurrentTheme(e.target.value as keyof typeof colorConfig.themes)
+                setCurrentTheme(
+                  e.target.value as keyof typeof colorConfig.themes
+                )
               }
               className='w-full p-2 rounded border'
               style={{
@@ -318,13 +459,13 @@ export default function ContributionCalendarWrapper({
 
           {/* Background Selection */}
           <div>
-            <label className='block text-sm font-medium mb-2'>
-              Background
-            </label>
+            <label className='block text-sm font-medium mb-2'>Background</label>
             <select
               value={currentBackground}
               onChange={(e) =>
-                setCurrentBackground(e.target.value as keyof typeof colorConfig.backgrounds)
+                setCurrentBackground(
+                  e.target.value as keyof typeof colorConfig.backgrounds
+                )
               }
               className='w-full p-2 rounded border'
               style={{
@@ -371,9 +512,7 @@ export default function ContributionCalendarWrapper({
             </label>
             <select
               value={exportFormat}
-              onChange={(e) =>
-                setExportFormat(e.target.value as 'png' | 'svg')
-              }
+              onChange={(e) => setExportFormat(e.target.value as 'png' | 'svg')}
               className='w-full p-2 rounded border'
               style={{
                 backgroundColor: theme.inputBg,
@@ -388,7 +527,10 @@ export default function ContributionCalendarWrapper({
         </div>
 
         {/* Advanced Controls */}
-        <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t' style={{ borderColor: theme.border }}>
+        <div
+          className='grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t'
+          style={{ borderColor: theme.border }}
+        >
           {/* Padding Control */}
           <div>
             <label className='block text-sm font-medium mb-2'>
@@ -428,9 +570,7 @@ export default function ContributionCalendarWrapper({
                 onChange={(e) => setShowWindowControls(e.target.checked)}
                 className='mr-2'
               />
-              <span className='text-sm font-medium'>
-                Show Window Controls
-              </span>
+              <span className='text-sm font-medium'>Show Window Controls</span>
             </label>
           </div>
         </div>
@@ -440,7 +580,7 @@ export default function ContributionCalendarWrapper({
       <div className='flex justify-center'>
         <div
           ref={calendarRef}
-          className="relative overflow-hidden shadow-2xl"
+          className='relative overflow-hidden shadow-2xl'
           style={{
             backgroundColor: theme.background,
             color: theme.text,
@@ -470,7 +610,7 @@ export default function ContributionCalendarWrapper({
               <div className='flex min-w-fit w-full'>
                 {/* Side labels */}
                 <div
-                  className="flex flex-col justify-between mr-3 text-xs opacity-70 font-mono"
+                  className='flex flex-col justify-between mr-3 text-xs opacity-70 font-mono'
                   style={{ color: theme.text }}
                 >
                   {(orientation === 'horizontal' ? weekdays : months).map(
@@ -538,7 +678,7 @@ export default function ContributionCalendarWrapper({
                     row.map((level, colIndex) => (
                       <div
                         key={`${rowIndex}-${colIndex}`}
-                        className="transition-all duration-300 hover:scale-125 w-full"
+                        className='transition-all duration-300 hover:scale-125 w-full'
                         title={`${level} contributions`}
                         style={{
                           backgroundColor: getColor(level),
@@ -560,7 +700,7 @@ export default function ContributionCalendarWrapper({
             {[0, 1, 2, 3, 4].map((level) => (
               <div
                 key={level}
-                className="w-4 h-4 rounded-sm mr-2 border border-white/30 dark:border-gray-600/50 transition-transform hover:scale-110"
+                className='w-4 h-4 rounded-sm mr-2 border border-white/30 dark:border-gray-600/50 transition-transform hover:scale-110'
                 style={{
                   backgroundColor: getColor(level),
                 }}
@@ -575,6 +715,74 @@ export default function ContributionCalendarWrapper({
           </div>
         </div>
       </div>
+
+      {/* SVG Display Section */}
+      {generatedSVG && (
+        <div className='mt-8'>
+          <div
+            className='p-4 rounded-lg border'
+            style={{
+              backgroundColor: theme.background,
+              color: theme.text,
+              borderColor: theme.border,
+            }}
+          >
+            <div className='flex items-center justify-between mb-4'>
+              <h3 className='text-lg font-semibold'>Generated SVG</h3>
+              <button
+                onClick={() => {
+                  const blob = new Blob([generatedSVG], {
+                    type: 'image/svg+xml',
+                  });
+                  const url = URL.createObjectURL(blob);
+                  const link = document.createElement('a');
+                  link.download = `contribution-calendar-${Date.now()}.svg`;
+                  link.href = url;
+                  link.click();
+                  URL.revokeObjectURL(url);
+                }}
+                className='px-3 py-1 rounded text-sm'
+                style={{
+                  backgroundColor: theme.button,
+                  color: theme.buttonText,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = theme.buttonHover;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = theme.button;
+                }}
+              >
+                Download SVG
+              </button>
+            </div>
+            <div
+              className='border rounded-lg overflow-auto max-h-96'
+              style={{ borderColor: theme.border }}
+            >
+              <pre
+                className='p-4 text-xs font-mono overflow-x-auto'
+                style={{ color: theme.text }}
+              >
+                <code>{generatedSVG}</code>
+              </pre>
+            </div>
+            <div
+              className='mt-4 p-4 border rounded-lg'
+              style={{ borderColor: theme.border }}
+            >
+              <h4 className='text-sm font-semibold mb-2'>SVG Preview:</h4>
+              <div className='flex justify-center'>
+                <div
+                  dangerouslySetInnerHTML={{ __html: generatedSVG }}
+                  className='border rounded'
+                  style={{ borderColor: theme.border }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
