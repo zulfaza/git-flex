@@ -1,4 +1,4 @@
-import ContributionCalendarWrapper from './components/ContributionCalendarWrapper';
+import ContributionCalendarWrapper from "./components/ContributionCalendarWrapper";
 
 const contributions = [
   [
@@ -43,7 +43,7 @@ export default function Home() {
     <ContributionCalendarWrapper
       contributions={contributions}
       squareSize={12}
-      orientation='horizontal'
+      orientation="horizontal"
     />
   );
 }
