@@ -1,4 +1,10 @@
+import { Metadata } from "next";
 import ContributionCalendarWrapper from "./components/ContributionCalendarWrapper";
+
+export const metadata: Metadata = {
+  title: "GitFlex",
+  description: "GitFlex is a calendar for GitHub contributions",
+};
 
 const contributions = [
   [

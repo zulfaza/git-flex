@@ -2,11 +2,9 @@
 
 import { useState, useRef, useMemo } from "react";
 import html2canvas from "html2canvas-pro";
-import { WEEKDAYS_SHORT_STRING } from "../constants/weekdays";
-import { MONTHS_SHORT_STRING } from "../constants/months";
 import { colorConfig } from "../constants/colors";
-import { getGridColor } from "../lib/getGridColor";
 import { generateSVG } from "../lib/generateSVG";
+import ContributionCalendar from "./ContributionCalendar";
 
 type Orientation = "horizontal" | "vertical";
 
@@ -53,10 +51,6 @@ export default function ContributionCalendarWrapper({
   const gridCols = orientation === "horizontal" ? 53 : 7;
   const gridRows = orientation === "horizontal" ? 7 : 53;
 
-  const getBackgroundColor = () => {
-    return theme.background;
-  };
-
   const exportCalendar = async () => {
     if (!calendarRef.current) {
       return;
@@ -92,7 +86,7 @@ export default function ContributionCalendarWrapper({
       } else {
         // Use html2canvas with safer settings to create the canvas
         const canvas = await html2canvas(calendarRef.current, {
-          backgroundColor: getBackgroundColor(),
+          backgroundColor: "#1f2937", // gray-800
           scale: 2, // Higher quality
           useCORS: true,
           allowTaint: true,
@@ -150,49 +144,22 @@ export default function ContributionCalendarWrapper({
   };
 
   return (
-    <div className={`min-h-screen p-4 ${background}`}>
+    <div className={`min-h-screen p-4 bg-gray-900`}>
       {/* Header */}
-      <div
-        className="p-4 print:hidden rounded-t-lg border"
-        style={{
-          backgroundColor: theme.header,
-          color: theme.text,
-          borderColor: theme.border,
-        }}
-      >
+      <div className="bg-gray-900 text-white border border-gray-700 rounded-t-lg p-4 mb-6 print:hidden">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold">GitHub Contribution Calendar</h1>
           <div className="flex items-center gap-2">
             <button
               onClick={handleGenerateSVG}
-              className="px-3 py-1 rounded text-sm"
-              style={{
-                backgroundColor: theme.button,
-                color: theme.buttonText,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = theme.buttonHover;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = theme.button;
-              }}
+              className="px-3 py-1 rounded text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors"
             >
               Generate SVG
             </button>
             <button
               onClick={exportCalendar}
               data-export-btn
-              className="px-3 py-1 rounded text-sm"
-              style={{
-                backgroundColor: theme.button,
-                color: theme.buttonText,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = theme.buttonHover;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = theme.button;
-              }}
+              className="px-3 py-1 rounded text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors"
             >
               Export {exportFormat.toUpperCase()}
             </button>
@@ -200,301 +167,155 @@ export default function ContributionCalendarWrapper({
         </div>
       </div>
 
-      {/* Controls */}
-      <div
-        className="print:hidden p-4 border-l border-r border-b rounded-b-lg mb-6"
-        style={{
-          backgroundColor: theme.background,
-          color: theme.text,
-          borderColor: theme.border,
-        }}
-      >
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {/* Theme Selection */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Theme</label>
-            <select
-              value={currentTheme}
-              onChange={(e) =>
-                setCurrentTheme(
-                  e.target.value as keyof typeof colorConfig.themes,
-                )
-              }
-              className="w-full p-2 rounded border"
-              style={{
-                backgroundColor: theme.inputBg,
-                color: theme.inputText,
-                borderColor: theme.input,
-              }}
-            >
-              {Object.keys(colorConfig.themes).map((themeKey) => (
-                <option key={themeKey} value={themeKey}>
-                  {themeKey.charAt(0).toUpperCase() +
-                    themeKey.slice(1).replace("-", " ")}
-                </option>
-              ))}
-            </select>
+      {/* Main Layout */}
+      <div className="flex gap-6">
+        {/* Controls - Left Sidebar */}
+        <div className="print:hidden h-full w-80 flex-shrink-0 p-4 border border-gray-700 rounded-lg bg-gray-800 text-white">
+          <div className="grid grid-cols-1 gap-4">
+            {/* Theme Selection */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Theme</label>
+              <select
+                value={currentTheme}
+                onChange={(e) =>
+                  setCurrentTheme(
+                    e.target.value as keyof typeof colorConfig.themes,
+                  )
+                }
+                className="w-full p-2 rounded border border-gray-600 bg-gray-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              >
+                {Object.keys(colorConfig.themes).map((themeKey) => (
+                  <option key={themeKey} value={themeKey}>
+                    {themeKey.charAt(0).toUpperCase() +
+                      themeKey.slice(1).replace("-", " ")}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Background Selection */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Background
+              </label>
+              <select
+                value={currentBackground}
+                onChange={(e) =>
+                  setCurrentBackground(
+                    e.target.value as keyof typeof colorConfig.backgrounds,
+                  )
+                }
+                className="w-full p-2 rounded border border-gray-600 bg-gray-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              >
+                {Object.keys(colorConfig.backgrounds).map((bgKey) => (
+                  <option key={bgKey} value={bgKey}>
+                    {bgKey.charAt(0).toUpperCase() +
+                      bgKey.slice(1).replace("-", " ")}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Orientation Selection */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Orientation
+              </label>
+              <select
+                value={orientation}
+                onChange={(e) =>
+                  setOrientation(e.target.value as "horizontal" | "vertical")
+                }
+                className="w-full p-2 rounded border border-gray-600 bg-gray-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="horizontal">Horizontal</option>
+                <option value="vertical">Vertical</option>
+              </select>
+            </div>
+
+            {/* Export Format */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Export Format
+              </label>
+              <select
+                value={exportFormat}
+                onChange={(e) =>
+                  setExportFormat(e.target.value as "png" | "svg")
+                }
+                className="w-full p-2 rounded border border-gray-600 bg-gray-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="png">PNG</option>
+                <option value="svg">SVG</option>
+              </select>
+            </div>
           </div>
 
-          {/* Background Selection */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Background</label>
-            <select
-              value={currentBackground}
-              onChange={(e) =>
-                setCurrentBackground(
-                  e.target.value as keyof typeof colorConfig.backgrounds,
-                )
-              }
-              className="w-full p-2 rounded border"
-              style={{
-                backgroundColor: theme.inputBg,
-                color: theme.inputText,
-                borderColor: theme.input,
-              }}
-            >
-              {Object.keys(colorConfig.backgrounds).map((bgKey) => (
-                <option key={bgKey} value={bgKey}>
-                  {bgKey.charAt(0).toUpperCase() +
-                    bgKey.slice(1).replace("-", " ")}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Orientation Selection */}
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Orientation
-            </label>
-            <select
-              value={orientation}
-              onChange={(e) =>
-                setOrientation(e.target.value as "horizontal" | "vertical")
-              }
-              className="w-full p-2 rounded border"
-              style={{
-                backgroundColor: theme.inputBg,
-                color: theme.inputText,
-                borderColor: theme.input,
-              }}
-            >
-              <option value="horizontal">Horizontal</option>
-              <option value="vertical">Vertical</option>
-            </select>
-          </div>
-
-          {/* Export Format */}
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Export Format
-            </label>
-            <select
-              value={exportFormat}
-              onChange={(e) => setExportFormat(e.target.value as "png" | "svg")}
-              className="w-full p-2 rounded border"
-              style={{
-                backgroundColor: theme.inputBg,
-                color: theme.inputText,
-                borderColor: theme.input,
-              }}
-            >
-              <option value="png">PNG</option>
-              <option value="svg">SVG</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Advanced Controls */}
-        <div
-          className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t"
-          style={{ borderColor: theme.border }}
-        >
-          {/* Padding Control */}
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Padding: {padding}px
-            </label>
-            <input
-              type="range"
-              min="16"
-              max="64"
-              value={padding}
-              onChange={(e) => setPadding(Number(e.target.value))}
-              className="w-full"
-            />
-          </div>
-
-          {/* Border Radius Control */}
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Border Radius: {borderRadius}px
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="32"
-              value={borderRadius}
-              onChange={(e) => setBorderRadius(Number(e.target.value))}
-              className="w-full"
-            />
-          </div>
-
-          {/* Window Controls Toggle */}
-          <div>
-            <label className="flex items-center">
+          {/* Advanced Controls */}
+          <div className="grid grid-cols-1 gap-4 mt-4 pt-4 border-t border-gray-600">
+            {/* Padding Control */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Padding: {padding}px
+              </label>
               <input
-                type="checkbox"
-                checked={showWindowControls}
-                onChange={(e) => setShowWindowControls(e.target.checked)}
-                className="mr-2"
+                type="range"
+                min="16"
+                max="64"
+                value={padding}
+                onChange={(e) => setPadding(Number(e.target.value))}
+                className="w-full"
               />
-              <span className="text-sm font-medium">Show Window Controls</span>
-            </label>
+            </div>
+
+            {/* Border Radius Control */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Border Radius: {borderRadius}px
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="32"
+                value={borderRadius}
+                onChange={(e) => setBorderRadius(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+
+            {/* Window Controls Toggle */}
+            <div>
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={showWindowControls}
+                  onChange={(e) => setShowWindowControls(e.target.checked)}
+                  className="mr-2"
+                />
+                <span className="text-sm font-medium">
+                  Show Window Controls
+                </span>
+              </label>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Calendar Container */}
-      <div className="flex justify-center">
         <div
           ref={calendarRef}
-          className="relative overflow-hidden shadow-2xl"
-          style={{
-            backgroundColor: theme.background,
-            color: theme.text,
-            padding: `${padding}px`,
-            borderRadius: `${borderRadius}px`,
-            WebkitPrintColorAdjust: "exact",
-            printColorAdjust: "exact",
-          }}
+          className={`${background} flex w-full h-full p-10`}
         >
-          {/* Window Controls */}
-          {showWindowControls && (
-            <div className="absolute top-4 left-4 flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
-            </div>
-          )}
-
-          {/* Calendar Title */}
-          <div className="text-center mb-6 mt-6">
-            <h2 className="text-lg font-semibold">Contribution Activity</h2>
-          </div>
-
-          {/* Calendar Grid */}
-          <div className="flex items-center justify-center">
-            <div className="flex flex-col w-fit rounded-lg p-4">
-              <div className="flex min-w-fit w-full">
-                {/* Side labels */}
-                <div
-                  className="flex flex-col justify-between mr-3 text-xs opacity-70 font-mono"
-                  style={{ color: theme.text }}
-                >
-                  {(orientation === "horizontal"
-                    ? WEEKDAYS_SHORT_STRING
-                    : MONTHS_SHORT_STRING
-                  ).map((label, index) => (
-                    <div
-                      key={label}
-                      className="flex items-center justify-end pr-2"
-                      style={{
-                        marginBottom: "2px",
-                        height: `${squareSize}px`,
-                      }}
-                    >
-                      {index % (orientation === "horizontal" ? 2 : 1) === 0 &&
-                        label}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Contribution grid */}
-                <div
-                  className="grid gap-1 relative"
-                  style={{
-                    gridTemplateColumns: `repeat(${gridCols}, ${squareSize}px)`,
-                    gridTemplateRows: `repeat(${gridRows}, ${squareSize}px)`,
-                    borderRadius: "8px",
-                  }}
-                >
-                  {/* Top labels */}
-                  <div className="absolute -top-6 w-full">
-                    <div
-                      className="grid mb-2 text-xs opacity-70"
-                      style={{
-                        color: theme.text,
-                        gridTemplateColumns:
-                          orientation === "horizontal"
-                            ? "repeat(12, minmax(0, 1fr))"
-                            : "repeat(8, minmax(0, 1fr))",
-                      }}
-                    >
-                      {(orientation === "horizontal"
-                        ? MONTHS_SHORT_STRING
-                        : WEEKDAYS_SHORT_STRING
-                      ).map((label, index, array) =>
-                        (orientation === "horizontal" && index % 2 === 0) ||
-                        (orientation === "vertical" && index % 3 === 0) ? (
-                          <div
-                            key={label}
-                            className="text-left"
-                            style={{
-                              gridColumn: `span ${getColSpanForTopLabel(
-                                index,
-                                array.length,
-                              )} / span ${getColSpanForTopLabel(
-                                index,
-                                array.length,
-                              )}`,
-                            }}
-                          >
-                            {label}
-                          </div>
-                        ) : null,
-                      )}
-                    </div>
-                  </div>
-                  {gridData.map((row, rowIndex) =>
-                    row.map((level, colIndex) => (
-                      <div
-                        key={`${rowIndex}-${colIndex}`}
-                        className="transition-all duration-300 hover:scale-125 w-full"
-                        title={`${level} contributions`}
-                        style={{
-                          backgroundColor: getGridColor(level, currentTheme),
-                          borderRadius: "4px",
-                          WebkitPrintColorAdjust: "exact",
-                          printColorAdjust: "exact",
-                        }}
-                      />
-                    )),
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Legend */}
-          <div className="flex items-center justify-center mt-8 text-sm font-mono">
-            <span className="mr-3 opacity-60 text-xs">Less</span>
-            {[0, 1, 2, 3, 4].map((level) => (
-              <div
-                key={level}
-                className="w-4 h-4 rounded-sm mr-2 border border-white/30 dark:border-gray-600/50 transition-transform hover:scale-110"
-                style={{
-                  backgroundColor: getGridColor(level, currentTheme),
-                }}
-              />
-            ))}
-            <span className="ml-1 opacity-60 text-xs">More</span>
-          </div>
-
-          {/* Footer */}
-          <div className="text-center mt-6 text-xs opacity-40 font-mono">
-            Generated with GitFlex
-          </div>
+          <ContributionCalendar
+            squareSize={squareSize}
+            orientation={orientation}
+            currentTheme={currentTheme}
+            padding={padding}
+            borderRadius={borderRadius}
+            showWindowControls={showWindowControls}
+            gridData={gridData}
+            gridCols={gridCols}
+            gridRows={gridRows}
+            getColSpanForTopLabel={getColSpanForTopLabel}
+          />
         </div>
       </div>
 

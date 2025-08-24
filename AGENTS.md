@@ -44,3 +44,8 @@
 - Implement proper loading states for async operations
 - Add accessibility attributes (titles, labels)
 - Follow React performance patterns (memoization when needed)
+
+### Development
+- After finished your work, you just need to check lint and type errors
+- DO NOT run build or dev commands if I don't asked you to
+- Do not add any unnecessary comments
