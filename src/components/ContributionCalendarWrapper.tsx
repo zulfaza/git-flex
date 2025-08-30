@@ -5,16 +5,15 @@ import html2canvas from "html2canvas-pro";
 import { colorConfig } from "../constants/colors";
 import { generateSVG } from "../lib/generateSVG";
 import ContributionCalendar from "./ContributionCalendar";
-import ColorPicker from "./ColorPicker"; // will refactor to shared picker
+import ContributionSkeleton from "./ContributionSkeleton";
+import ColorPicker from "./ColorPicker";
+import type { ContributionGridCell } from "../lib/githubApi";
 
 interface CustomThemeColors {
   background: string;
   wrapperBackground: string;
   text: string;
   border: string;
-  button: string;
-  buttonHover: string;
-  buttonText: string;
   legendColors: string[];
 }
 
@@ -30,25 +29,41 @@ const createCustomThemeColors = (
 type Orientation = "horizontal" | "vertical";
 
 interface ContributionCalendarWrapperProps {
-  contributions: number[][];
+  contributions: (ContributionGridCell | null)[][];
+  isLoading?: boolean;
   squareSize?: number;
   orientation?: Orientation;
+  selectedYear?: number;
+  onYearChange?: (year: number) => void;
+  showYearSelector?: boolean;
 }
 
 // Transpose data for vertical orientation
-const getGridData = (orientation: Orientation, contributions: number[][]) => {
+const getGridData = (
+  orientation: Orientation,
+  contributions: (ContributionGridCell | null)[][],
+) => {
   if (orientation === "horizontal") {
     return contributions;
   }
-  return contributions[0].map((_, colIndex) =>
-    contributions.map((row) => row[colIndex]),
+
+  // For vertical orientation, transpose the matrix
+  // Find the maximum column length to handle incomplete rows
+  const maxCols = Math.max(...contributions.map((row) => row.length));
+
+  return Array.from({ length: maxCols }, (_, colIndex) =>
+    contributions.map((row) => row[colIndex] || null),
   );
 };
 
 export default function ContributionCalendarWrapper({
   contributions,
+  isLoading = false,
   squareSize = 12,
   orientation: initialOrientation = "horizontal",
+  selectedYear = 2025,
+  onYearChange,
+  showYearSelector = false,
 }: ContributionCalendarWrapperProps) {
   const [currentTheme, setCurrentTheme] =
     useState<keyof typeof colorConfig.themes>("github-dark");
@@ -68,10 +83,10 @@ export default function ContributionCalendarWrapper({
   const [title, setTitle] = useState("Contribution Activity");
   const [showTitle, setShowTitle] = useState(true);
   const [showLegend, setShowLegend] = useState(true);
-  const [
-    generatedSVG,
-    // setGeneratedSVG
-  ] = useState<string>("");
+  // const [
+  //   generatedSVG,
+  //   setGeneratedSVG
+  // ] = useState<string>("");
   const calendarRef = useRef<HTMLDivElement>(null);
   const theme = customColors;
 
@@ -104,7 +119,6 @@ export default function ContributionCalendarWrapper({
     [orientation, contributions],
   );
   const gridCols = orientation === "horizontal" ? 53 : 7;
-  const gridRows = orientation === "horizontal" ? 7 : 53;
 
   const exportCalendar = async () => {
     if (!calendarRef.current) {
@@ -186,16 +200,6 @@ export default function ContributionCalendarWrapper({
   //   setGeneratedSVG(svgContent);
   // };
 
-  const getColSpanForTopLabel = (index: number, arrayLength: number) => {
-    if (orientation === "horizontal") {
-      return 2;
-    }
-    if (orientation === "vertical" && index !== arrayLength - 1) {
-      return 3;
-    }
-    return 1;
-  };
-
   // selection state id pattern: base:<key> or legend:<index>
   const [selectedColorId, setSelectedColorId] =
     useState<string>("base:background");
@@ -276,6 +280,43 @@ export default function ContributionCalendarWrapper({
                       themeKey.slice(1).replace("-", " ")}
                   </option>
                 ))}
+              </select>
+            </div>
+
+            {/* Year Selection */}
+            {showYearSelector && onYearChange && (
+              <div>
+                <label className="block text-sm font-medium mb-2 text-white">
+                  Year
+                </label>
+                <select
+                  value={selectedYear}
+                  onChange={(e) => onYearChange(parseInt(e.target.value))}
+                  className="w-full p-2 rounded border border-gray-600 bg-gray-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                >
+                  {[2021, 2022, 2023, 2024, 2025].map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Orientation Selection */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Orientation
+              </label>
+              <select
+                value={orientation}
+                onChange={(e) =>
+                  setOrientation(e.target.value as "horizontal" | "vertical")
+                }
+                className="w-full p-2 rounded border border-gray-600 bg-gray-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="horizontal">Horizontal</option>
+                <option value="vertical">Vertical</option>
               </select>
             </div>
 
@@ -404,23 +445,6 @@ export default function ContributionCalendarWrapper({
                   </>
                 )}
               </div>
-            </div>
-
-            {/* Orientation Selection */}
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Orientation
-              </label>
-              <select
-                value={orientation}
-                onChange={(e) =>
-                  setOrientation(e.target.value as "horizontal" | "vertical")
-                }
-                className="w-full p-2 rounded border border-gray-600 bg-gray-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              >
-                <option value="horizontal">Horizontal</option>
-                <option value="vertical">Vertical</option>
-              </select>
             </div>
 
             {/* Export Format */}
@@ -577,25 +601,31 @@ export default function ContributionCalendarWrapper({
           }}
           className="flex justify-center items-center h-full"
         >
-          <ContributionCalendar
-            squareSize={squareSize}
-            orientation={orientation}
-            customColors={customColors}
-            padding={padding}
-            borderRadius={borderRadius}
-            gridData={gridData}
-            gridCols={gridCols}
-            gridRows={gridRows}
-            getColSpanForTopLabel={getColSpanForTopLabel}
-            title={title}
-            showTitle={showTitle}
-            showLegend={showLegend}
-          />
+          {isLoading ? (
+            <ContributionSkeleton
+              squareSize={squareSize}
+              orientation={orientation}
+              padding={padding}
+              borderRadius={borderRadius}
+            />
+          ) : (
+            <ContributionCalendar
+              orientation={orientation}
+              customColors={customColors}
+              padding={padding}
+              borderRadius={borderRadius}
+              gridData={gridData}
+              gridCols={gridCols}
+              title={title}
+              showTitle={showTitle}
+              showLegend={showLegend}
+            />
+          )}
         </div>
       </div>
 
       {/* SVG Display Section */}
-      {generatedSVG && (
+      {/*{generatedSVG && (
         <div className="mt-8">
           <div
             className="p-4 rounded-lg border"
@@ -620,24 +650,11 @@ export default function ContributionCalendarWrapper({
                   URL.revokeObjectURL(url);
                 }}
                 className="px-3 py-1 rounded text-sm"
-                style={{
-                  backgroundColor: theme.button,
-                  color: theme.buttonText,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = theme.buttonHover;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = theme.button;
-                }}
               >
                 Download SVG
               </button>
             </div>
-            <div
-              className="border rounded-lg overflow-auto max-h-96"
-              style={{ borderColor: theme.border }}
-            >
+            <div className="border rounded-lg overflow-auto max-h-96">
               <pre
                 className="p-4 text-xs font-mono overflow-x-auto"
                 style={{ color: theme.text }}
@@ -660,7 +677,7 @@ export default function ContributionCalendarWrapper({
             </div>
           </div>
         </div>
-      )}
+      )}*/}
     </div>
   );
 }

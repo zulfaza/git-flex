@@ -1,19 +1,17 @@
 import { MONTHS_SHORT_STRING } from "../constants/months";
 import { WEEKDAYS_SHORT_STRING } from "../constants/weekdays";
+import type { ContributionGridCell } from "./githubApi";
 
 interface CustomThemeColors {
   background: string;
   wrapperBackground: string;
   text: string;
   border: string;
-  button: string;
-  buttonHover: string;
-  buttonText: string;
   legendColors: string[];
 }
 
 type Params = {
-  gridData: number[][];
+  gridData: (ContributionGridCell | null)[][];
   squareSize: number;
   customColors: CustomThemeColors;
   borderRadius: number;
@@ -79,13 +77,16 @@ export const generateSVG = ({
 
   // Contribution squares
   gridData.forEach((row, rowIndex) => {
-    row.forEach((level, colIndex) => {
-      const x = 40 + colIndex * squareSize;
-      const y = 60 + rowIndex * squareSize;
-      const color = customColors.legendColors[level] || customColors.legendColors[0];
-      svg += `<rect x="${x}" y="${y}" width="${squareSize - 1}" height="${
-        squareSize - 1
-      }" fill="${color}" rx="2" ry="2"/>`;
+    row.forEach((cell, colIndex) => {
+      if (cell) {
+        const x = 40 + colIndex * squareSize;
+        const y = 60 + rowIndex * squareSize;
+        const color =
+          customColors.legendColors[cell.level] || customColors.legendColors[0];
+        svg += `<rect x="${x}" y="${y}" width="${squareSize - 1}" height="${
+          squareSize - 1
+        }" fill="${color}" rx="2" ry="2"/>`;
+      }
     });
   });
 
@@ -99,7 +100,8 @@ export const generateSVG = ({
 
   [0, 1, 2, 3, 4].forEach((level, index) => {
     const x = 60 + index * 20;
-    const color = customColors.legendColors[level] || customColors.legendColors[0];
+    const color =
+      customColors.legendColors[level] || customColors.legendColors[0];
     svg += `<rect x="${x}" y="${legendY}" width="16" height="16" fill="${color}" rx="2" ry="2"/>`;
   });
 

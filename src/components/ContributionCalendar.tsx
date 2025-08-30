@@ -2,6 +2,7 @@
 
 import { WEEKDAYS_SHORT_STRING } from "../constants/weekdays";
 import { MONTHS_SHORT_STRING } from "../constants/months";
+import type { ContributionGridCell } from "../lib/githubApi";
 
 type Orientation = "horizontal" | "vertical";
 
@@ -10,37 +11,28 @@ interface CustomThemeColors {
   wrapperBackground: string;
   text: string;
   border: string;
-  button: string;
-  buttonHover: string;
-  buttonText: string;
   legendColors: string[];
 }
 
 interface ContributionCalendarProps {
-  squareSize: number;
   orientation: Orientation;
   customColors: CustomThemeColors;
   padding: number;
   borderRadius: number;
-  gridData: number[][];
+  gridData: (ContributionGridCell | null)[][];
   gridCols: number;
-  gridRows: number;
-  getColSpanForTopLabel: (index: number, arrayLength: number) => number;
   title?: string;
   showTitle?: boolean;
   showLegend?: boolean;
 }
 
 const ContributionCalendar = ({
-  squareSize,
   orientation,
   customColors,
   padding,
   borderRadius,
   gridData,
   gridCols,
-  gridRows,
-  getColSpanForTopLabel,
   title = "Contribution Activity",
   showTitle = true,
   showLegend = true,
@@ -50,10 +42,52 @@ const ContributionCalendar = ({
   const getCustomGridColor = (level: number) => {
     return customColors.legendColors[level] || customColors.legendColors[0];
   };
-  const sideLabels =
-    orientation === "horizontal" ? WEEKDAYS_SHORT_STRING : MONTHS_SHORT_STRING;
-  const topLabels =
-    orientation === "horizontal" ? MONTHS_SHORT_STRING : WEEKDAYS_SHORT_STRING;
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const getMonthLabelsWithColspan = (): Array<{
+    label: string;
+    colspan: number;
+  }> => {
+    const monthLabels: Array<{ label: string; colspan: number }> = [];
+
+    if (orientation === "horizontal") {
+      // For horizontal orientation, show months across the top
+      const weeksPerMonth = [5, 4, 5, 4, 4, 5, 4, 4, 5, 4, 4, 5]; // Approximate weeks per month
+
+      MONTHS_SHORT_STRING.forEach((month, index) => {
+        monthLabels.push({
+          label: month,
+          colspan: weeksPerMonth[index] || 4,
+        });
+      });
+    } else {
+      // For vertical orientation, show months down the side
+      // Each month spans approximately 4-5 weeks (vertically)
+      const weeksPerMonth = [5, 4, 5, 4, 4, 5, 4, 4, 5, 4, 4, 5];
+
+      MONTHS_SHORT_STRING.forEach((month, index) => {
+        monthLabels.push({
+          label: month,
+          colspan: weeksPerMonth[index] || 4,
+        });
+      });
+    }
+
+    return monthLabels;
+  };
+
+  const sideLabels = WEEKDAYS_SHORT_STRING;
+
   return (
     <div className="flex-1">
       <div className="flex justify-center">
@@ -82,87 +116,230 @@ const ContributionCalendar = ({
 
           {/* Calendar Grid */}
           <div className="flex items-center justify-center">
-            <div className="flex flex-col w-fit rounded-lg p-4">
-              <div className="flex min-w-fit w-full">
-                {/* Side labels */}
-                <div className="flex flex-col justify-between mr-3 text-xs opacity-70 font-mono text-gray-300">
-                  {sideLabels.map((label, index) => (
-                    <div
-                      key={label}
-                      className="flex items-center justify-end pr-2"
-                      style={{
-                        marginBottom: "2px",
-                        height: `${squareSize}px`,
-                        color: theme.text,
-                      }}
-                    >
-                      {index % (orientation === "horizontal" ? 2 : 1) === 0 &&
-                        label}
-                    </div>
-                  ))}
-                </div>
+            <table
+              role="grid"
+              aria-readonly="true"
+              className="border-separate overflow-hidden"
+              style={{
+                borderSpacing: "3px",
+                position: "relative",
+              }}
+            >
+              <caption className="sr-only">Contribution Graph</caption>
 
-                {/* Contribution grid */}
-                <div
-                  className="grid gap-1 relative"
-                  style={{
-                    gridTemplateColumns: `repeat(${gridCols}, ${squareSize}px)`,
-                    gridTemplateRows: `repeat(${gridRows}, ${squareSize}px)`,
-                    borderRadius: "8px",
-                  }}
-                >
-                  {/* Top labels */}
-                  <div className="absolute -top-6 w-full">
-                    <div
-                      className="grid mb-2 text-xs opacity-70 text-gray-300"
-                      style={{
-                        gridTemplateColumns:
-                          orientation === "horizontal"
-                            ? "repeat(12, minmax(0, 1fr))"
-                            : "repeat(8, minmax(0, 1fr))",
-                      }}
-                    >
-                      {topLabels.map((label, index, array) =>
-                        (orientation === "horizontal" && index % 2 === 0) ||
-                        (orientation === "vertical" && index % 3 === 0) ? (
-                          <div
-                            key={label}
-                            className="text-left"
+              {/* Header row with month labels */}
+              {orientation === "horizontal" && (
+                <thead>
+                  <tr style={{ height: "13px" }}>
+                    {/* Empty cell for weekday column */}
+                    <td style={{ width: "28px" }}>
+                      <span className="sr-only">Day of Week</span>
+                    </td>
+
+                    {/* Month labels */}
+                    {getMonthLabelsWithColspan().map((month, index) => (
+                      <td
+                        key={month.label}
+                        className="text-xs relative"
+                        colSpan={month.colspan}
+                        style={{
+                          position: "relative",
+                          color: theme.text,
+                          opacity: 0.7,
+                        }}
+                      >
+                        <span className="sr-only">
+                          {MONTHS_SHORT_STRING[index]}
+                        </span>
+                        <span
+                          aria-hidden="true"
+                          style={{
+                            position: "absolute",
+                            top: 0,
+                          }}
+                        >
+                          {month.label}
+                        </span>
+                      </td>
+                    ))}
+                  </tr>
+                </thead>
+              )}
+
+              {/* Header column with month labels for vertical orientation */}
+              {orientation === "vertical" && (
+                <thead>
+                  <tr style={{ height: "13px" }}>
+                    {/* Empty cell for weekday row */}
+                    <td style={{ width: "28px" }}>
+                      <span className="sr-only">Day of Week</span>
+                    </td>
+
+                    {/* Weekday labels for vertical orientation */}
+                    {WEEKDAYS_SHORT_STRING.map((day) => (
+                      <td
+                        key={day}
+                        className="text-xs relative"
+                        style={{
+                          position: "relative",
+                          color: theme.text,
+                          opacity: 0.7,
+                        }}
+                      >
+                        <span className="sr-only">{day}</span>
+                        <span
+                          aria-hidden="true"
+                          style={{
+                            position: "absolute",
+                            top: 0,
+                          }}
+                        >
+                          {day}
+                        </span>
+                      </td>
+                    ))}
+                  </tr>
+                </thead>
+              )}
+
+              <tbody>
+                {orientation === "horizontal"
+                  ? sideLabels.map((dayLabel, dayIndex) => (
+                      <tr key={dayLabel} style={{ height: "15px" }}>
+                        {/* Weekday label */}
+                        <td
+                          className="text-xs relative"
+                          style={{
+                            position: "relative",
+                            color: theme.text,
+                            opacity: 0.7,
+                          }}
+                        >
+                          <span className="sr-only">{dayLabel}</span>
+                          <span
+                            className="absolute"
+                            aria-hidden="true"
                             style={{
-                              gridColumn: `span ${getColSpanForTopLabel(
-                                index,
-                                array.length,
-                              )} / span ${getColSpanForTopLabel(
-                                index,
-                                array.length,
-                              )}`,
-                              color: theme.text,
+                              clipPath:
+                                dayIndex % 2 === 0 ? "none" : "circle(0)",
+                              bottom: "-3px",
                             }}
                           >
-                            {label}
-                          </div>
-                        ) : null,
-                      )}
-                    </div>
-                  </div>
-                  {gridData.map((row, rowIndex) =>
-                    row.map((level, colIndex) => (
-                      <div
-                        key={`${rowIndex}-${colIndex}`}
-                        className="transition-all duration-300 hover:scale-125 w-full"
-                        title={`${level} contributions`}
-                        style={{
-                          backgroundColor: getCustomGridColor(level),
-                          borderRadius: "4px",
-                          WebkitPrintColorAdjust: "exact",
-                          printColorAdjust: "exact",
-                        }}
-                      />
-                    )),
-                  )}
-                </div>
-              </div>
-            </div>
+                            {dayIndex % 2 === 0 ? dayLabel : ""}
+                          </span>
+                        </td>
+
+                        {/* Contribution cells */}
+                        {gridData[dayIndex]?.map((cell, colIndex) =>
+                          cell ? (
+                            <td
+                              key={`${dayIndex}-${colIndex}`}
+                              tabIndex={
+                                colIndex === 1 && dayIndex === 0 ? 0 : -1
+                              }
+                              aria-selected="false"
+                              aria-describedby={`contribution-graph-legend-level-${cell.level}`}
+                              style={{
+                                width: "15px",
+                                backgroundColor: getCustomGridColor(cell.level),
+                                borderRadius: "2px",
+                                WebkitPrintColorAdjust: "exact",
+                                printColorAdjust: "exact",
+                              }}
+                              data-date={cell.date}
+                              data-level={cell.level}
+                              role="gridcell"
+                              className="transition-all duration-300 hover:scale-125"
+                              title={
+                                cell.date
+                                  ? `${cell.contributionCount} contributions on ${formatDate(cell.date)}`
+                                  : `${cell.contributionCount} contributions`
+                              }
+                            />
+                          ) : (
+                            <td key={`${dayIndex}-${colIndex}`} />
+                          ),
+                        )}
+
+                        {/* Fill empty cells if needed */}
+                        {Array.from({
+                          length: Math.max(
+                            0,
+                            gridCols - (gridData[dayIndex]?.length || 0),
+                          ),
+                        }).map((_, emptyIndex) => (
+                          <td key={`empty-${dayIndex}-${emptyIndex}`} />
+                        ))}
+                      </tr>
+                    ))
+                  : gridData.map((weekData, weekIndex) => (
+                      <tr key={weekIndex} style={{ height: "30px" }}>
+                        {/* Month label for vertical orientation */}
+                        <td
+                          className="text-xs relative"
+                          style={{
+                            position: "relative",
+                            color: theme.text,
+                            opacity: 0.7,
+                          }}
+                        >
+                          <span className="sr-only">Week {weekIndex + 1}</span>
+                          <span
+                            aria-hidden="true"
+                            style={{
+                              position: "absolute",
+                              bottom: "-3px",
+                            }}
+                          >
+                            {weekIndex % 4 === 0
+                              ? MONTHS_SHORT_STRING[
+                                  Math.floor(weekIndex / 4.3)
+                                ] || ""
+                              : ""}
+                          </span>
+                        </td>
+
+                        {/* Contribution cells for vertical orientation */}
+                        {weekData?.map((cell, dayIndex) =>
+                          cell ? (
+                            <td
+                              key={`${weekIndex}-${dayIndex}`}
+                              tabIndex={
+                                dayIndex === 1 && weekIndex === 0 ? 0 : -1
+                              }
+                              aria-selected="false"
+                              aria-describedby={`contribution-graph-legend-level-${cell.level}`}
+                              style={{
+                                width: "30px",
+                                backgroundColor: getCustomGridColor(cell.level),
+                                WebkitPrintColorAdjust: "exact",
+                                printColorAdjust: "exact",
+                              }}
+                              data-date={cell.date}
+                              data-level={cell.level}
+                              role="gridcell"
+                              className="transition-all duration-300 hover:scale-125 rounded-xs"
+                              title={
+                                cell.date
+                                  ? `${cell.contributionCount} contributions on ${formatDate(cell.date)}`
+                                  : `${cell.contributionCount} contributions`
+                              }
+                            />
+                          ) : (
+                            <td key={`${weekIndex}-${dayIndex}`} />
+                          ),
+                        )}
+
+                        {/* Fill empty cells if needed for vertical */}
+                        {Array.from({
+                          length: Math.max(0, 7 - (weekData?.length || 0)),
+                        }).map((_, emptyIndex) => (
+                          <td key={`empty-${weekIndex}-${emptyIndex}`} />
+                        ))}
+                      </tr>
+                    ))}
+              </tbody>
+            </table>
           </div>
 
           <div className="flex justify-between items-center px-4 mt-6">

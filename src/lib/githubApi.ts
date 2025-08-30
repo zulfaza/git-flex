@@ -1,3 +1,5 @@
+// import { writeLog } from "./log";
+
 interface ContributionDay {
   date: string;
   contributionCount: number;
@@ -26,13 +28,19 @@ interface GitHubResponse {
   };
 }
 
+export interface ContributionGridCell {
+  date: string;
+  contributionCount: number;
+  level: number;
+}
+
 const token = process.env.GITHUB_TOKEN;
 
 export async function fetchGitHubContributions(
   username: string,
   fromDate?: string,
   toDate?: string,
-): Promise<number[][]> {
+): Promise<(ContributionGridCell | null)[][]> {
   // First, try to get basic user info without authentication
   const userResponse = await fetch(`https://api.github.com/users/${username}`);
 
@@ -46,7 +54,11 @@ export async function fetchGitHubContributions(
   // If no token provided, return empty grid with a message
   if (!token) {
     console.log(`No token provided for ${username}. Showing empty calendar.`);
-    return Array.from({ length: 7 }, () => Array(53).fill(0));
+    return Array.from({ length: 7 }, () =>
+      Array(53)
+        .fill(null)
+        .map(() => ({ date: "", contributionCount: 0, level: 0 })),
+    );
   }
 
   // If token is provided, fetch actual contribution data
@@ -76,8 +88,12 @@ export async function fetchGitHubContributions(
   };
 
   const variables: Record<string, string> = { username };
-  if (fromDate) variables.from = fromDate;
-  if (toDate) variables.to = toDate;
+  if (fromDate) {
+    variables.from = fromDate;
+  }
+  if (toDate) {
+    variables.to = toDate;
+  }
 
   const response = await fetch("https://api.github.com/graphql", {
     method: "POST",
@@ -101,19 +117,34 @@ export async function fetchGitHubContributions(
   }
 
   const calendar = data.data.user.contributionsCollection.contributionCalendar;
-
+  // await writeLog(`${username}.json`, calendar);
   return transformContributionData(calendar);
 }
 
-function transformContributionData(calendar: ContributionCalendar): number[][] {
+function transformContributionData(
+  calendar: ContributionCalendar,
+): (ContributionGridCell | null)[][] {
   const weeks = calendar.weeks;
-  const contributionGrid: number[][] = [];
+
+  // Initialize grid: 7 rows (days of week) by number of weeks columns
+  const contributionGrid: (ContributionGridCell | null)[][] = [];
   for (let i = 0; i < 7; i++) {
     contributionGrid[i] = [];
   }
-  weeks.forEach((week) => {
-    week.contributionDays.forEach((day, dayIndex) => {
+
+  // Fill grid column by column (week by week)
+  weeks.forEach((week, weekIndex) => {
+    // Initialize this week's column with null values
+    for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+      contributionGrid[dayIndex][weekIndex] = null;
+    }
+
+    // Fill in the actual contribution days
+    week.contributionDays.forEach((day) => {
       let level = 0;
+      const date = new Date(day.date);
+      const dayIndex = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+
       if (day.contributionCount > 0) {
         if (day.contributionCount <= 3) level = 1;
         else if (day.contributionCount <= 6) level = 2;
@@ -121,7 +152,11 @@ function transformContributionData(calendar: ContributionCalendar): number[][] {
         else level = 4;
       }
 
-      contributionGrid[dayIndex].push(level);
+      contributionGrid[dayIndex][weekIndex] = {
+        date: day.date,
+        contributionCount: day.contributionCount,
+        level: level,
+      };
     });
   });
 
