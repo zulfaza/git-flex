@@ -5,26 +5,25 @@ import html2canvas from "html2canvas-pro";
 import { colorConfig } from "../constants/colors";
 import { generateSVG } from "../lib/generateSVG";
 import ContributionCalendar from "./ContributionCalendar";
-import ColorPicker from './ColorPicker'; // will refactor to shared picker
+import ColorPicker from "./ColorPicker"; // will refactor to shared picker
 
 interface CustomThemeColors {
   background: string;
+  wrapperBackground: string;
   text: string;
   border: string;
-  header: string;
   button: string;
   buttonHover: string;
   buttonText: string;
-  input: string;
-  inputBg: string;
-  inputText: string;
   legendColors: string[];
 }
 
-const createCustomThemeColors = (theme: keyof typeof colorConfig.themes): CustomThemeColors => {
+const createCustomThemeColors = (
+  theme: keyof typeof colorConfig.themes,
+): CustomThemeColors => {
   return {
     ...colorConfig.themes[theme],
-    legendColors: [...colorConfig.contributionColors[theme]]
+    legendColors: [...colorConfig.contributionColors[theme]],
   };
 };
 
@@ -54,39 +53,43 @@ export default function ContributionCalendarWrapper({
   const [currentTheme, setCurrentTheme] =
     useState<keyof typeof colorConfig.themes>("github-dark");
   const [customColors, setCustomColors] = useState<CustomThemeColors>(
-    createCustomThemeColors("github-dark")
+    createCustomThemeColors("github-dark"),
   );
-  const [currentBackground, setCurrentBackground] =
-    useState<keyof typeof colorConfig.backgrounds>("solid");
   const [exportFormat, setExportFormat] = useState<"png" | "svg">("png");
   const [orientation, setOrientation] =
     useState<Orientation>(initialOrientation);
-  const [padding, setPadding] = useState(32);
+  const [padding, setPadding] = useState(16);
   const [borderRadius, setBorderRadius] = useState(16);
+  const [wrapperPaddingX, setWrapperPaddingX] = useState(0);
+  const [wrapperPaddingY, setWrapperPaddingY] = useState(0);
   const [title, setTitle] = useState("Contribution Activity");
   const [showTitle, setShowTitle] = useState(true);
   const [showLegend, setShowLegend] = useState(true);
   const [generatedSVG, setGeneratedSVG] = useState<string>("");
   const calendarRef = useRef<HTMLDivElement>(null);
   const theme = customColors;
-  const background = colorConfig.backgroundClasses[currentBackground];
 
   const handleThemeChange = (newTheme: keyof typeof colorConfig.themes) => {
     setCurrentTheme(newTheme);
     setCustomColors(createCustomThemeColors(newTheme));
   };
 
-  const handleColorChange = (colorKey: keyof CustomThemeColors, value: string) => {
-    setCustomColors(prev => ({
+  const handleColorChange = (
+    colorKey: keyof CustomThemeColors,
+    value: string,
+  ) => {
+    setCustomColors((prev) => ({
       ...prev,
-      [colorKey]: value
+      [colorKey]: value,
     }));
   };
 
   const handleLegendColorChange = (index: number, value: string) => {
-    setCustomColors(prev => ({
+    setCustomColors((prev) => ({
       ...prev,
-      legendColors: prev.legendColors.map((color, i) => i === index ? value : color)
+      legendColors: prev.legendColors.map((color, i) =>
+        i === index ? value : color,
+      ),
     }));
   };
 
@@ -118,8 +121,6 @@ export default function ContributionCalendarWrapper({
           orientation,
           squareSize,
           gridData,
-          currentBackground,
-          currentTheme,
           customColors,
           borderRadius,
         });
@@ -173,8 +174,6 @@ export default function ContributionCalendarWrapper({
       squareSize,
       orientation,
       gridData,
-      currentBackground,
-      currentTheme,
       customColors,
       borderRadius,
     });
@@ -192,55 +191,64 @@ export default function ContributionCalendarWrapper({
   };
 
   // selection state id pattern: base:<key> or legend:<index>
-  const [selectedColorId, setSelectedColorId] = useState<string>('base:background')
-  const [openPopover, setOpenPopover] = useState<{ id: string; x: number; y: number } | null>(null)
-  const openerRef = useRef<HTMLButtonElement | null>(null)
+  const [selectedColorId, setSelectedColorId] =
+    useState<string>("base:background");
+  const [openPopover, setOpenPopover] = useState<{
+    id: string;
+    x: number;
+    y: number;
+  } | null>(null);
+  const openerRef = useRef<HTMLButtonElement | null>(null);
 
   // close on escape / resize / scroll
   useEffect(() => {
-    if (!openPopover) return
-    const handle = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpenPopover(null) }
-    const close = () => setOpenPopover(null)
-    window.addEventListener('keydown', handle)
-    window.addEventListener('scroll', close, true)
-    window.addEventListener('resize', close)
+    if (!openPopover) return;
+    const handle = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenPopover(null);
+    };
+    const close = () => setOpenPopover(null);
+    window.addEventListener("keydown", handle);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
     return () => {
-      window.removeEventListener('keydown', handle)
-      window.removeEventListener('scroll', close, true)
-      window.removeEventListener('resize', close)
-    }
-  }, [openPopover])
+      window.removeEventListener("keydown", handle);
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+    };
+  }, [openPopover]);
 
   useEffect(() => {
     if (!openPopover && openerRef.current) {
-      openerRef.current.focus()
+      openerRef.current.focus();
     }
-  }, [openPopover])
-  const baseColorEntries = Object.entries(customColors).filter(([k]) => k !== 'legendColors') as [keyof CustomThemeColors, string][]
+  }, [openPopover]);
+  const baseColorEntries = Object.entries(customColors).filter(
+    ([k]) => k !== "legendColors",
+  ) as [keyof CustomThemeColors, string][];
   const resolveSelectedHex = () => {
-    if (selectedColorId.startsWith('base:')) {
-      const key = selectedColorId.slice(5) as keyof CustomThemeColors
-      return customColors[key] as string
+    if (selectedColorId.startsWith("base:")) {
+      const key = selectedColorId.slice(5) as keyof CustomThemeColors;
+      return customColors[key] as string;
     }
-    if (selectedColorId.startsWith('legend:')) {
-      const idx = parseInt(selectedColorId.slice(7), 10)
-      return customColors.legendColors[idx]
+    if (selectedColorId.startsWith("legend:")) {
+      const idx = parseInt(selectedColorId.slice(7), 10);
+      return customColors.legendColors[idx];
     }
-    return '#000000'
-  }
+    return "#000000";
+  };
   const applySelectedHex = (hex: string) => {
-    if (selectedColorId.startsWith('base:')) {
-      const key = selectedColorId.slice(5) as keyof CustomThemeColors
-      handleColorChange(key, hex)
-    } else if (selectedColorId.startsWith('legend:')) {
-      const idx = parseInt(selectedColorId.slice(7), 10)
-      handleLegendColorChange(idx, hex)
+    if (selectedColorId.startsWith("base:")) {
+      const key = selectedColorId.slice(5) as keyof CustomThemeColors;
+      handleColorChange(key, hex);
+    } else if (selectedColorId.startsWith("legend:")) {
+      const idx = parseInt(selectedColorId.slice(7), 10);
+      handleLegendColorChange(idx, hex);
     }
-  }
+  };
   return (
-    <div className={`min-h-screen p-4 bg-gray-900`}>
+    <div className="min-h-screen p-4 bg-gray-900">
       {/* Header */}
-      <div className="bg-gray-900 text-white border border-gray-700 rounded-t-lg p-4 mb-6 print:hidden">
+      <div className="text-white border bg-gray-900 border-gray-700 rounded-t-lg p-4 mb-6 print:hidden">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold">GitHub Contribution Calendar</h1>
           <div className="flex items-center gap-2">
@@ -257,14 +265,14 @@ export default function ContributionCalendarWrapper({
             >
               Export {exportFormat.toUpperCase()}
             </button>
-            </div>
           </div>
         </div>
+      </div>
 
       {/* Main Layout */}
-      <div className="flex gap-6">
+      <div className="flex gap-6 min-h-[500px]">
         {/* Controls - Left Sidebar */}
-        <div className="print:hidden h-full w-80 flex-shrink-0 p-4 border border-gray-700 rounded-lg bg-gray-800 text-white">
+        <div className="print:hidden bg-gray-900 border-gray-700 h-full w-80 flex-shrink-0 p-4 border rounded-lg">
           <div className="grid grid-cols-1 gap-4">
             {/* Theme Selection */}
             <div>
@@ -290,9 +298,14 @@ export default function ContributionCalendarWrapper({
             {/* Custom Color Controls */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-white">Custom Colors</label>
+                <label className="block text-sm font-medium text-white">
+                  Custom Colors
+                </label>
                 <button
-                  onClick={() => {setCustomColors(createCustomThemeColors(currentTheme)); setSelectedColorId('base:background')}}
+                  onClick={() => {
+                    setCustomColors(createCustomThemeColors(currentTheme));
+                    setSelectedColorId("base:background");
+                  }}
                   className="px-2 py-1 text-xs rounded bg-gray-600 text-white hover:bg-gray-500 transition-colors"
                   title="Reset to theme defaults"
                 >
@@ -300,89 +313,113 @@ export default function ContributionCalendarWrapper({
                 </button>
               </div>
               <div className="flex flex-col gap-3">
-                <div className="space-y-1 max-h-56 overflow-y-auto pr-1 border border-gray-600 rounded p-2 bg-gray-750">
+                <div className="space-y-1  pr-1 border border-gray-600 rounded p-2 bg-gray-750">
                   {baseColorEntries.map(([colorKey, colorValue]) => {
-                    const id = `base:${colorKey}`
-                    const selected = selectedColorId === id
+                    const id = `base:${colorKey}`;
+                    const selected = selectedColorId === id;
                     return (
                       <button
                         key={colorKey as string}
                         type="button"
-                        onClick={(e) => { setSelectedColorId(id); const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect(); openerRef.current = e.currentTarget; setOpenPopover({ id, x: rect.right + 8, y: rect.top + window.scrollY }); }}
-                        className={`w-full flex items-center gap-2 px-2 py-1 rounded border text-left text-xs transition-colors ${selected ? 'border-blue-500 bg-blue-500/20' : 'border-gray-600 hover:border-gray-500 bg-gray-700/40 hover:bg-gray-700/60'}`}
+                        onClick={(e) => {
+                          setSelectedColorId(id);
+                          const rect = (
+                            e.currentTarget as HTMLButtonElement
+                          ).getBoundingClientRect();
+                          openerRef.current = e.currentTarget;
+                          setOpenPopover({
+                            id,
+                            x: rect.right + 8,
+                            y: rect.top + window.scrollY,
+                          });
+                        }}
+                        className={`w-full flex items-center gap-2 px-2 py-1 rounded border text-left text-xs transition-colors ${selected ? "border-blue-500 bg-blue-500/20" : "border-gray-600 hover:border-gray-500 bg-gray-700/40 hover:bg-gray-700/60"}`}
                         title={`Select ${colorKey} color`}
                       >
-                        <span className="w-5 h-5 rounded border border-gray-600" style={{ background: colorValue }} />
-                        <span className="capitalize flex-1">{(colorKey as string).replace(/([A-Z])/g,' $1').trim()}</span>
-                        <span className="font-mono text-[10px]">{colorValue}</span>
+                        <span
+                          className="w-5 h-5 rounded border border-gray-600"
+                          style={{ background: colorValue }}
+                        />
+                        <span className="capitalize flex-1">
+                          {(colorKey as string)
+                            .replace(/([A-Z])/g, " $1")
+                            .trim()}
+                        </span>
+                        <span className="font-mono text-[10px]">
+                          {colorValue}
+                        </span>
                       </button>
-                    )
+                    );
                   })}
-                  <div className="pt-2 mt-2 border-t border-gray-600/70 text-[10px] uppercase tracking-wide text-gray-400">Legend</div>
+                  <div className="pt-2 mt-2 border-t border-gray-600/70 text-[10px] uppercase tracking-wide text-gray-400">
+                    Legend
+                  </div>
                   {customColors.legendColors.map((c, i) => {
-                    const id = `legend:${i}`
-                    const selected = selectedColorId === id
+                    const id = `legend:${i}`;
+                    const selected = selectedColorId === id;
                     return (
                       <button
                         key={id}
                         type="button"
-                        onClick={(e) => { setSelectedColorId(id); const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect(); openerRef.current = e.currentTarget; setOpenPopover({ id, x: rect.right + 8, y: rect.top + window.scrollY }); }}
-                        className={`w-full flex items-center gap-2 px-2 py-1 rounded border text-left text-xs transition-colors ${selected ? 'border-blue-500 bg-blue-500/20' : 'border-gray-600 hover:border-gray-500 bg-gray-700/40 hover:bg-gray-700/60'}`}
+                        onClick={(e) => {
+                          setSelectedColorId(id);
+                          const rect = (
+                            e.currentTarget as HTMLButtonElement
+                          ).getBoundingClientRect();
+                          openerRef.current = e.currentTarget;
+                          setOpenPopover({
+                            id,
+                            x: rect.right + 8,
+                            y: rect.top + window.scrollY,
+                          });
+                        }}
+                        className={`w-full flex items-center gap-2 px-2 py-1 rounded border text-left text-xs transition-colors ${selected ? "border-blue-500 bg-blue-500/20" : "border-gray-600 hover:border-gray-500 bg-gray-700/40 hover:bg-gray-700/60"}`}
                         title={`Select legend level ${i}`}
                       >
-                        <span className="w-5 h-5 rounded border border-gray-600" style={{ background: c }} />
+                        <span
+                          className="w-5 h-5 rounded border border-gray-600"
+                          style={{ background: c }}
+                        />
                         <span className="flex-1">Level {i}</span>
                         <span className="font-mono text-[10px]">{c}</span>
                       </button>
-                    )
+                    );
                   })}
                 </div>
-                 {/* Popover container (portal-like) */}
-                 {openPopover && openPopover.id === selectedColorId && (
-                   <>
-                     {/* click outside catcher */}
-                     <div className="fixed inset-0 z-40" onClick={() => setOpenPopover(null)} />
-                     <div
-                       className="fixed z-50"
-                       style={{ top: openPopover.y, left: openPopover.x }}
-                       role="dialog"
-                       aria-label="Color picker"
-                     >
-                       <div className="relative bg-gray-800 border border-gray-600 rounded shadow-lg p-2 w-60">
-                         <div className="absolute -top-2 left-2 w-3 h-3 rotate-45 bg-gray-800 border-l border-t border-gray-600" />
-                         <div className="flex justify-between items-center mb-1">
-                           <span className="text-[11px] font-mono px-1 py-0.5 rounded bg-gray-700 border border-gray-600">{selectedColorId}</span>
-                           <button className="text-[11px] px-2 py-0.5 rounded bg-gray-700 border border-gray-600 hover:bg-gray-600" onClick={() => setOpenPopover(null)}>Close</button>
-                         </div>
-                         <ColorPicker value={resolveSelectedHex()} onChange={applySelectedHex} />
-                       </div>
-                     </div>
-                   </>
-                 )}
-               </div>
-             </div>
-
-            {/* Background Selection */}
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Background
-              </label>
-              <select
-                value={currentBackground}
-                onChange={(e) =>
-                  setCurrentBackground(
-                    e.target.value as keyof typeof colorConfig.backgrounds,
-                  )
-                }
-                className="w-full p-2 rounded border border-gray-600 bg-gray-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              >
-                {Object.keys(colorConfig.backgrounds).map((bgKey) => (
-                  <option key={bgKey} value={bgKey}>
-                    {bgKey.charAt(0).toUpperCase() +
-                      bgKey.slice(1).replace("-", " ")}
-                  </option>
-                ))}
-              </select>
+                {openPopover && openPopover.id === selectedColorId && (
+                  <>
+                    {/* click outside catcher */}
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setOpenPopover(null)}
+                    />
+                    <div
+                      className="fixed z-50"
+                      style={{ top: openPopover.y, left: openPopover.x }}
+                      role="dialog"
+                      aria-label="Color picker"
+                    >
+                      <div className="relative bg-gray-800 border border-gray-600 rounded shadow-lg p-2 w-60">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-[11px] font-mono px-1 py-0.5 rounded bg-gray-700 border border-gray-600">
+                            {selectedColorId}
+                          </span>
+                          <button
+                            className="text-[11px] px-2 py-0.5 rounded bg-gray-700 border border-gray-600 hover:bg-gray-600"
+                            onClick={() => setOpenPopover(null)}
+                          >
+                            Close
+                          </button>
+                        </div>
+                        <ColorPicker
+                          value={resolveSelectedHex()}
+                          onChange={applySelectedHex}
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Orientation Selection */}
@@ -452,6 +489,36 @@ export default function ContributionCalendarWrapper({
               />
             </div>
 
+            {/* Wrapper Horizontal Padding Control */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Horizontal Padding: {wrapperPaddingX}px
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={wrapperPaddingX}
+                onChange={(e) => setWrapperPaddingX(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+
+            {/* Wrapper Vertical Padding Control */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Vertical Padding: {wrapperPaddingY}px
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={wrapperPaddingY}
+                onChange={(e) => setWrapperPaddingY(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+
             {/* Title Controls */}
             <div className="pt-4 border-t border-gray-600">
               <div className="mb-4">
@@ -497,8 +564,16 @@ export default function ContributionCalendarWrapper({
         </div>
 
         <div
+          id="contribution-wrapper"
           ref={calendarRef}
-          className={`${background} flex w-full h-full p-10`}
+          style={{
+            backgroundColor: theme.wrapperBackground,
+            paddingLeft: `${wrapperPaddingX}px`,
+            paddingRight: `${wrapperPaddingX}px`,
+            paddingTop: `${wrapperPaddingY}px`,
+            paddingBottom: `${wrapperPaddingY}px`,
+          }}
+          className="flex justify-center items-center h-full"
         >
           <ContributionCalendar
             squareSize={squareSize}

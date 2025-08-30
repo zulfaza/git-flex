@@ -7,15 +7,12 @@ type Orientation = "horizontal" | "vertical";
 
 interface CustomThemeColors {
   background: string;
+  wrapperBackground: string;
   text: string;
   border: string;
-  header: string;
   button: string;
   buttonHover: string;
   buttonText: string;
-  input: string;
-  inputBg: string;
-  inputText: string;
   legendColors: string[];
 }
 
@@ -73,11 +70,15 @@ const ContributionCalendar = ({
           {/* Calendar Title */}
           {showTitle && (
             <div className="text-center mb-6 mt-6 min-h-[28px] flex items-center justify-center">
-              <h2 className="text-lg font-semibold" style={{ color: theme.text }}>
+              <h2
+                className="text-lg font-semibold"
+                style={{ color: theme.text }}
+              >
                 {title}
               </h2>
             </div>
           )}
+          {!showTitle && <div className="min-h-[20px]"></div>}
 
           {/* Calendar Grid */}
           <div className="flex items-center justify-center">
@@ -164,36 +165,37 @@ const ContributionCalendar = ({
             </div>
           </div>
 
-          {/* Legend */}
-          {showLegend && (
-            <div className="flex items-center justify-center mt-8 text-sm font-mono min-h-[32px]">
-              <span
-                className="mr-3 opacity-60 text-xs"
-                style={{ color: theme.text }}
-              >
-                Less
-              </span>
-              {[0, 1, 2, 3, 4].map((level) => (
-                <div
-                  key={level}
-                  className="w-4 h-4 rounded-sm mr-2 border border-white/30 dark:border-gray-600/50 transition-transform hover:scale-110"
-                  style={{
-                    backgroundColor: getCustomGridColor(level),
-                  }}
-                />
-              ))}
-              <span
-                className="ml-1 opacity-60 text-xs"
-                style={{ color: theme.text }}
-              >
-                More
-              </span>
+          <div className="flex justify-between items-center">
+            {/* Footer */}
+            <div className="text-center mt-6 text-xs opacity-40 font-mono">
+              Generated with GitFlex
             </div>
-          )}
-
-          {/* Footer */}
-          <div className="text-center mt-6 text-xs opacity-40 font-mono">
-            Generated with GitFlex
+            {/* Legend */}
+            {showLegend && (
+              <div className="flex items-center justify-center mt-8 text-sm font-mono min-h-[32px]">
+                <span
+                  className="mr-3 opacity-60 text-xs"
+                  style={{ color: theme.text }}
+                >
+                  Less
+                </span>
+                {[0, 1, 2, 3, 4].map((level) => (
+                  <div
+                    key={level}
+                    className="w-4 h-4 rounded-sm mr-2 border border-white/30 dark:border-gray-600/50 transition-transform hover:scale-110"
+                    style={{
+                      backgroundColor: getCustomGridColor(level),
+                    }}
+                  />
+                ))}
+                <span
+                  className="ml-1 opacity-60 text-xs"
+                  style={{ color: theme.text }}
+                >
+                  More
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>

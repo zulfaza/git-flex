@@ -1,34 +1,26 @@
-import { colorConfig } from "../constants/colors";
 import { MONTHS_SHORT_STRING } from "../constants/months";
 import { WEEKDAYS_SHORT_STRING } from "../constants/weekdays";
 
 interface CustomThemeColors {
   background: string;
+  wrapperBackground: string;
   text: string;
   border: string;
-  header: string;
   button: string;
   buttonHover: string;
   buttonText: string;
-  input: string;
-  inputBg: string;
-  inputText: string;
   legendColors: string[];
 }
 
 type Params = {
   gridData: number[][];
   squareSize: number;
-  currentBackground: keyof typeof colorConfig.backgrounds;
-  currentTheme: keyof typeof colorConfig.themes;
   customColors: CustomThemeColors;
   borderRadius: number;
   orientation: "horizontal" | "vertical";
 };
 export const generateSVG = ({
   squareSize,
-  currentBackground,
-  currentTheme,
   customColors,
   borderRadius,
   orientation,
@@ -41,49 +33,6 @@ export const generateSVG = ({
   const totalHeight = gridRows * squareSize + 120; // Extra space for title and legend
 
   let svg = `<svg width="${totalWidth}" height="${totalHeight}" xmlns="http://www.w3.org/2000/svg">`;
-
-  // Define gradients and patterns
-  if (currentBackground === "gradient-blue") {
-    svg += `<defs>
-      <linearGradient id="bg-gradient-blue" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" style="stop-color:#e0f2fe;stop-opacity:1" />
-        <stop offset="100%" style="stop-color:#bfdbfe;stop-opacity:1" />
-      </linearGradient>
-    </defs>`;
-  } else if (currentBackground === "gradient-purple") {
-    svg += `<defs>
-      <linearGradient id="bg-gradient-purple" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" style="stop-color:#f3e8ff;stop-opacity:1" />
-        <stop offset="100%" style="stop-color:#e9d5ff;stop-opacity:1" />
-      </linearGradient>
-    </defs>`;
-  } else if (currentBackground === "gradient-green") {
-    svg += `<defs>
-      <linearGradient id="bg-gradient-green" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" style="stop-color:#dcfce7;stop-opacity:1" />
-        <stop offset="100%" style="stop-color:#bbf7d0;stop-opacity:1" />
-      </linearGradient>
-    </defs>`;
-  } else if (currentBackground === "gradient-orange") {
-    svg += `<defs>
-      <linearGradient id="bg-gradient-orange" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" style="stop-color:#fff7ed;stop-opacity:1" />
-        <stop offset="100%" style="stop-color:#fed7aa;stop-opacity:1" />
-      </linearGradient>
-    </defs>`;
-  } else if (currentBackground === "mesh") {
-    svg += `<defs>
-      <pattern id="mesh-pattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-        <circle cx="1" cy="1" r="1" fill="rgba(0,0,0,0.05)" />
-      </pattern>
-    </defs>`;
-  } else if (currentBackground === "dots") {
-    svg += `<defs>
-      <pattern id="dots-pattern" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
-        <circle cx="12" cy="12" r="1" fill="rgba(0,0,0,0.1)" />
-      </pattern>
-    </defs>`;
-  }
 
   // Background
   const backgroundFill = theme.background;

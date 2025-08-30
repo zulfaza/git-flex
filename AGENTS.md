@@ -47,5 +47,6 @@
 
 ### Development
 - After finished your work, you just need to check lint and type errors
-- DO NOT run build or dev commands if I don't asked you to
+- DO NOT run build, dev, or start commands if I don't asked you to
 - Do not add any unnecessary comments
+- Do not commit any changes, user will do it himself
