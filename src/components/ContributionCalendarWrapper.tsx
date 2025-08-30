@@ -5,6 +5,7 @@ import html2canvas from "html2canvas-pro";
 import { colorConfig } from "../constants/colors";
 import { generateSVG } from "../lib/generateSVG";
 import ContributionCalendar from "./ContributionCalendar";
+import ColorPicker from './ColorPicker'; // will refactor to shared picker
 
 interface CustomThemeColors {
   background: string;
@@ -190,6 +191,29 @@ export default function ContributionCalendarWrapper({
     return 1;
   };
 
+  // selection state id pattern: base:<key> or legend:<index>
+  const [selectedColorId, setSelectedColorId] = useState<string>('base:background')
+  const baseColorEntries = Object.entries(customColors).filter(([k]) => k !== 'legendColors') as [keyof CustomThemeColors, string][]
+  const resolveSelectedHex = () => {
+    if (selectedColorId.startsWith('base:')) {
+      const key = selectedColorId.slice(5) as keyof CustomThemeColors
+      return customColors[key] as string
+    }
+    if (selectedColorId.startsWith('legend:')) {
+      const idx = parseInt(selectedColorId.slice(7), 10)
+      return customColors.legendColors[idx]
+    }
+    return '#000000'
+  }
+  const applySelectedHex = (hex: string) => {
+    if (selectedColorId.startsWith('base:')) {
+      const key = selectedColorId.slice(5) as keyof CustomThemeColors
+      handleColorChange(key, hex)
+    } else if (selectedColorId.startsWith('legend:')) {
+      const idx = parseInt(selectedColorId.slice(7), 10)
+      handleLegendColorChange(idx, hex)
+    }
+  }
   return (
     <div className={`min-h-screen p-4 bg-gray-900`}>
       {/* Header */}
@@ -245,61 +269,57 @@ export default function ContributionCalendarWrapper({
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-medium text-white">Custom Colors</label>
                 <button
-                  onClick={() => setCustomColors(createCustomThemeColors(currentTheme))}
+                  onClick={() => {setCustomColors(createCustomThemeColors(currentTheme)); setSelectedColorId('base:background')}}
                   className="px-2 py-1 text-xs rounded bg-gray-600 text-white hover:bg-gray-500 transition-colors"
                   title="Reset to theme defaults"
                 >
                   Reset
                 </button>
               </div>
-              <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto pr-1 border border-gray-600 rounded p-2 bg-gray-750">
-                {/* Basic theme colors */}
-                {Object.entries(customColors).filter(([key]) => key !== 'legendColors').map(([colorKey, colorValue]) => (
-                  <div key={colorKey} className="flex items-center gap-2">
-                    <label className="text-xs font-medium text-gray-400 w-20 capitalize flex-shrink-0 text-left">
-                      {colorKey.replace(/([A-Z])/g, ' $1').trim()}
-                    </label>
-                    <input
-                      type="color"
-                      value={colorValue as string}
-                      onChange={(e) => handleColorChange(colorKey as keyof CustomThemeColors, e.target.value)}
-                      className="w-6 h-6 rounded border border-gray-600 cursor-pointer bg-transparent flex-shrink-0"
-                      title={`Pick color for ${colorKey}`}
-                    />
-                    <input
-                      type="text"
-                      value={colorValue as string}
-                      onChange={(e) => handleColorChange(colorKey as keyof CustomThemeColors, e.target.value)}
-                      className="flex-1 p-1 text-xs rounded border border-gray-600 bg-gray-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono"
-                      placeholder="#000000"
-                    />
+              <div className="flex flex-col gap-3">
+                <div className="space-y-1 max-h-56 overflow-y-auto pr-1 border border-gray-600 rounded p-2 bg-gray-750">
+                  {baseColorEntries.map(([colorKey, colorValue]) => {
+                    const id = `base:${colorKey}`
+                    const selected = selectedColorId === id
+                    return (
+                      <button
+                        key={colorKey as string}
+                        type="button"
+                        onClick={() => setSelectedColorId(id)}
+                        className={`w-full flex items-center gap-2 px-2 py-1 rounded border text-left text-xs transition-colors ${selected ? 'border-blue-500 bg-blue-500/20' : 'border-gray-600 hover:border-gray-500 bg-gray-700/40 hover:bg-gray-700/60'}`}
+                        title={`Select ${colorKey} color`}
+                      >
+                        <span className="w-5 h-5 rounded border border-gray-600" style={{ background: colorValue }} />
+                        <span className="capitalize flex-1">{(colorKey as string).replace(/([A-Z])/g,' $1').trim()}</span>
+                        <span className="font-mono text-[10px]">{colorValue}</span>
+                      </button>
+                    )
+                  })}
+                  <div className="pt-2 mt-2 border-t border-gray-600/70 text-[10px] uppercase tracking-wide text-gray-400">Legend</div>
+                  {customColors.legendColors.map((c, i) => {
+                    const id = `legend:${i}`
+                    const selected = selectedColorId === id
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => setSelectedColorId(id)}
+                        className={`w-full flex items-center gap-2 px-2 py-1 rounded border text-left text-xs transition-colors ${selected ? 'border-blue-500 bg-blue-500/20' : 'border-gray-600 hover:border-gray-500 bg-gray-700/40 hover:bg-gray-700/60'}`}
+                        title={`Select legend level ${i}`}
+                      >
+                        <span className="w-5 h-5 rounded border border-gray-600" style={{ background: c }} />
+                        <span className="flex-1">Level {i}</span>
+                        <span className="font-mono text-[10px]">{c}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+                <div className="border border-gray-600 rounded p-2 bg-gray-750">
+                  <div className="text-[11px] font-medium mb-2 text-gray-300 flex justify-between items-center">
+                    <span>Edit Selected</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-gray-700 border border-gray-600 font-mono">{selectedColorId}</span>
                   </div>
-                ))}
-                
-                {/* Legend colors */}
-                <div className="pt-2 border-t border-gray-600 mt-2">
-                  <div className="text-xs font-medium text-gray-400 mb-2">Legend Colors (0-4)</div>
-                  {customColors.legendColors.map((color, index) => (
-                    <div key={`legend-${index}`} className="flex items-center gap-2 mb-1">
-                      <label className="text-xs font-medium text-gray-400 w-20 flex-shrink-0 text-left">
-                        Level {index}
-                      </label>
-                      <input
-                        type="color"
-                        value={color}
-                        onChange={(e) => handleLegendColorChange(index, e.target.value)}
-                        className="w-6 h-6 rounded border border-gray-600 cursor-pointer bg-transparent flex-shrink-0"
-                        title={`Pick color for contribution level ${index}`}
-                      />
-                      <input
-                        type="text"
-                        value={color}
-                        onChange={(e) => handleLegendColorChange(index, e.target.value)}
-                        className="flex-1 p-1 text-xs rounded border border-gray-600 bg-gray-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono"
-                        placeholder="#000000"
-                      />
-                    </div>
-                  ))}
+                  <ColorPicker value={resolveSelectedHex()} onChange={applySelectedHex} />
                 </div>
               </div>
             </div>
