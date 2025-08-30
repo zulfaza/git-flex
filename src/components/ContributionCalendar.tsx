@@ -165,14 +165,14 @@ const ContributionCalendar = ({
             </div>
           </div>
 
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center px-4 mt-6">
             {/* Footer */}
-            <div className="text-center mt-6 text-xs opacity-40 font-mono">
+            <div className="text-center text-xs opacity-40 font-mono">
               Generated with GitFlex
             </div>
             {/* Legend */}
             {showLegend && (
-              <div className="flex items-center justify-center mt-8 text-sm font-mono min-h-[32px]">
+              <div className="flex items-center justify-center text-sm font-mono min-h-[32px]">
                 <span
                   className="mr-3 opacity-60 text-xs"
                   style={{ color: theme.text }}
@@ -182,8 +182,9 @@ const ContributionCalendar = ({
                 {[0, 1, 2, 3, 4].map((level) => (
                   <div
                     key={level}
-                    className="w-4 h-4 rounded-sm mr-2 border border-white/30 dark:border-gray-600/50 transition-transform hover:scale-110"
+                    className="w-4 h-4 rounded-sm mr-2 transition-transform hover:scale-110"
                     style={{
+                      border: `1px solid ${theme.border}`,
                       backgroundColor: getCustomGridColor(level),
                     }}
                   />

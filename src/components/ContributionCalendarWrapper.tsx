@@ -55,17 +55,23 @@ export default function ContributionCalendarWrapper({
   const [customColors, setCustomColors] = useState<CustomThemeColors>(
     createCustomThemeColors("github-dark"),
   );
-  const [exportFormat, setExportFormat] = useState<"png" | "svg">("png");
+  const [
+    exportFormat,
+    // setExportFormat
+  ] = useState<"png" | "svg">("png");
   const [orientation, setOrientation] =
     useState<Orientation>(initialOrientation);
   const [padding, setPadding] = useState(16);
-  const [borderRadius, setBorderRadius] = useState(16);
+  const [borderRadius, setBorderRadius] = useState(0);
   const [wrapperPaddingX, setWrapperPaddingX] = useState(0);
   const [wrapperPaddingY, setWrapperPaddingY] = useState(0);
   const [title, setTitle] = useState("Contribution Activity");
   const [showTitle, setShowTitle] = useState(true);
   const [showLegend, setShowLegend] = useState(true);
-  const [generatedSVG, setGeneratedSVG] = useState<string>("");
+  const [
+    generatedSVG,
+    // setGeneratedSVG
+  ] = useState<string>("");
   const calendarRef = useRef<HTMLDivElement>(null);
   const theme = customColors;
 
@@ -168,17 +174,17 @@ export default function ContributionCalendarWrapper({
     }
   };
 
-  // Generate and display SVG
-  const handleGenerateSVG = () => {
-    const svgContent = generateSVG({
-      squareSize,
-      orientation,
-      gridData,
-      customColors,
-      borderRadius,
-    });
-    setGeneratedSVG(svgContent);
-  };
+  // // Generate and display SVG
+  // const handleGenerateSVG = () => {
+  //   const svgContent = generateSVG({
+  //     squareSize,
+  //     orientation,
+  //     gridData,
+  //     customColors,
+  //     borderRadius,
+  //   });
+  //   setGeneratedSVG(svgContent);
+  // };
 
   const getColSpanForTopLabel = (index: number, arrayLength: number) => {
     if (orientation === "horizontal") {
@@ -246,33 +252,11 @@ export default function ContributionCalendarWrapper({
     }
   };
   return (
-    <div className="min-h-screen p-4 bg-gray-900">
-      {/* Header */}
-      <div className="text-white border bg-gray-900 border-gray-700 rounded-t-lg p-4 mb-6 print:hidden">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold">GitHub Contribution Calendar</h1>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleGenerateSVG}
-              className="px-3 py-1 rounded text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-            >
-              Generate SVG
-            </button>
-            <button
-              onClick={exportCalendar}
-              data-export-btn
-              className="px-3 py-1 rounded text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-            >
-              Export {exportFormat.toUpperCase()}
-            </button>
-          </div>
-        </div>
-      </div>
-
+    <div className="min-h-screen p-4">
       {/* Main Layout */}
-      <div className="flex gap-6 min-h-[500px]">
+      <div className="flex flex-col lg:flex-row gap-6 min-h-[500px]">
         {/* Controls - Left Sidebar */}
-        <div className="print:hidden bg-gray-900 border-gray-700 h-full w-80 flex-shrink-0 p-4 border rounded-lg">
+        <div className="print:hidden bg-gray-900 border-gray-700 h-full w-full lg:w-80 flex-shrink-0 p-4 border rounded-lg">
           <div className="grid grid-cols-1 gap-4">
             {/* Theme Selection */}
             <div>
@@ -440,7 +424,7 @@ export default function ContributionCalendarWrapper({
             </div>
 
             {/* Export Format */}
-            <div>
+            {/*<div>
               <label className="block text-sm font-medium mb-2">
                 Export Format
               </label>
@@ -454,7 +438,7 @@ export default function ContributionCalendarWrapper({
                 <option value="png">PNG</option>
                 <option value="svg">SVG</option>
               </select>
-            </div>
+            </div>*/}
           </div>
 
           {/* Advanced Controls */}
@@ -559,6 +543,24 @@ export default function ContributionCalendarWrapper({
                 />
                 Show Legend
               </label>
+            </div>
+
+            <div>
+              <div className="flex flex-col gap-2">
+                {/*<button
+                  onClick={handleGenerateSVG}
+                  className="px-3 py-2 block w-full rounded text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                >
+                  Generate SVG
+                </button>*/}
+                <button
+                  onClick={exportCalendar}
+                  data-export-btn
+                  className="px-3 py-2 rounded text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                >
+                  Export {exportFormat.toUpperCase()}
+                </button>
+              </div>
             </div>
           </div>
         </div>

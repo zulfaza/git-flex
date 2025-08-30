@@ -1,55 +1,69 @@
 import ContributionCalendarWrapper from "@/components/ContributionCalendarWrapper";
+import { fetchGitHubContributions } from "@/lib/githubApi";
 import { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "GitFlex",
-  description: "GitFlex is a calendar for GitHub contributions",
-};
+interface PageProps {
+  params: Promise<{ username: string }>;
+  searchParams: Promise<{ token?: string }>;
+}
 
-const contributions = [
-  [
-    4, 2, 1, 2, 0, 1, 2, 3, 3, 4, 1, 0, 1, 2, 4, 0, 4, 1, 4, 4, 1, 4, 1, 3, 2,
-    4, 2, 1, 1, 0, 4, 4, 4, 4, 4, 3, 0, 4, 1, 4, 0, 1, 4, 0, 3, 0, 0, 2, 0, 1,
-    1, 3, 2,
-  ],
-  [
-    2, 3, 3, 0, 1, 3, 4, 0, 3, 3, 3, 2, 1, 0, 3, 2, 0, 2, 1, 0, 1, 1, 0, 1, 0,
-    4, 0, 2, 1, 4, 0, 4, 0, 2, 4, 3, 1, 2, 1, 2, 4, 1, 3, 1, 3, 4, 1, 0, 1, 1,
-    0, 2, 4,
-  ],
-  [
-    3, 0, 3, 2, 0, 0, 0, 2, 0, 3, 0, 3, 0, 3, 4, 3, 4, 0, 3, 2, 4, 0, 2, 2, 2,
-    0, 3, 3, 2, 0, 3, 1, 0, 0, 0, 4, 1, 4, 2, 1, 1, 2, 0, 2, 0, 0, 3, 1, 2, 3,
-    0, 0, 1,
-  ],
-  [
-    1, 1, 2, 4, 4, 2, 0, 1, 4, 4, 1, 3, 4, 0, 4, 0, 3, 4, 0, 2, 0, 2, 0, 0, 0,
-    1, 3, 3, 2, 1, 1, 0, 4, 0, 2, 0, 2, 2, 1, 0, 4, 0, 3, 4, 0, 0, 0, 0, 3, 2,
-    3, 0, 4,
-  ],
-  [
-    2, 2, 3, 4, 4, 2, 3, 2, 4, 4, 2, 2, 1, 1, 4, 3, 3, 3, 2, 2, 1, 3, 0, 0, 0,
-    4, 0, 3, 3, 4, 4, 1, 0, 3, 2, 1, 0, 1, 4, 4, 2, 2, 4, 1, 3, 2, 2, 4, 4, 0,
-    1, 2, 2,
-  ],
-  [
-    0, 4, 3, 3, 0, 3, 1, 3, 4, 0, 0, 1, 2, 2, 0, 2, 3, 0, 4, 2, 2, 1, 1, 4, 4,
-    3, 3, 1, 1, 0, 2, 4, 3, 0, 3, 0, 4, 1, 3, 4, 1, 1, 1, 1, 3, 2, 2, 2, 1, 4,
-    2, 0, 4,
-  ],
-  [
-    0, 1, 0, 2, 2, 2, 0, 0, 1, 1, 2, 4, 1, 1, 4, 1, 1, 0, 2, 2, 3, 3, 3, 0, 0,
-    0, 0, 4, 4, 3, 0, 2, 2, 1, 0, 0, 0, 1, 0, 2, 2, 1, 1, 4, 0, 3, 2, 1, 2, 0,
-    3, 1, 4,
-  ],
-];
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { username } = await params;
+  return {
+    title: `${username} - GitFlex`,
+    description: `GitHub contribution calendar for ${username}`,
+  };
+}
 
-export default function Home() {
+export default async function UserPage({ params }: PageProps) {
+  const { username } = await params;
+
+  let contributions: number[][] = [];
+  let error: string | null = null;
+
+  try {
+    contributions = await fetchGitHubContributions(username);
+  } catch (err) {
+    error =
+      err instanceof Error ? err.message : "Failed to fetch contributions";
+    // Fallback to empty grid
+    contributions = Array.from({ length: 7 }, () => Array(53).fill(0));
+  }
+
+  if (error) {
+    return (
+      <div className="bg-gray-900 min-h-screen">
+        <div className="max-w-[1440px] mx-auto p-4">
+          <div className="text-center py-12">
+            <h1 className="text-2xl font-bold text-white mb-4">
+              Error Loading Contributions
+            </h1>
+            <p className="text-gray-400 mb-6">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <ContributionCalendarWrapper
-      contributions={contributions}
-      squareSize={12}
-      orientation="horizontal"
-    />
+    <div className="bg-gray-900">
+      <div className="max-w-[1440px] mx-auto p-4">
+        <div className="mb-6 px-4">
+          <h1 className="text-2xl font-bold text-white mb-2">
+            {username}&apos;s GitHub Contributions
+          </h1>
+          <p className="text-gray-400">
+            Contribution calendar for the past year
+          </p>
+        </div>
+        <ContributionCalendarWrapper
+          contributions={contributions}
+          squareSize={12}
+          orientation="horizontal"
+        />
+      </div>
+    </div>
   );
 }
