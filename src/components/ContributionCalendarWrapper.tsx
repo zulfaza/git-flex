@@ -339,33 +339,28 @@ export default function ContributionCalendarWrapper({
                 </div>
                  {/* Popover container (portal-like) */}
                  {openPopover && openPopover.id === selectedColorId && (
-                   <div
-                     className="fixed z-50"
-                     style={{ top: openPopover.y, left: openPopover.x }}
-                     role="dialog"
-                     aria-label="Color picker"
-                   >
-                     <div className="relative bg-gray-800 border border-gray-600 rounded shadow-lg p-2 w-60" onClick={e => e.stopPropagation()}>
-                       <div className="absolute -top-2 left-2 w-3 h-3 rotate-45 bg-gray-800 border-l border-t border-gray-600" />
-                       <div className="flex justify-between items-center mb-1">
-                         <span className="text-[11px] font-mono px-1 py-0.5 rounded bg-gray-700 border border-gray-600">{selectedColorId}</span>
-                         <button className="text-[11px] px-2 py-0.5 rounded bg-gray-700 border border-gray-600 hover:bg-gray-600" onClick={() => setOpenPopover(null)}>Close</button>
-                       </div>
-                       <ColorPicker value={resolveSelectedHex()} onChange={applySelectedHex} />
-                     </div>
+                   <>
                      {/* click outside catcher */}
-                     <div className="fixed inset-0" onClick={() => setOpenPopover(null)} />
-                   </div>
+                     <div className="fixed inset-0 z-40" onClick={() => setOpenPopover(null)} />
+                     <div
+                       className="fixed z-50"
+                       style={{ top: openPopover.y, left: openPopover.x }}
+                       role="dialog"
+                       aria-label="Color picker"
+                     >
+                       <div className="relative bg-gray-800 border border-gray-600 rounded shadow-lg p-2 w-60">
+                         <div className="absolute -top-2 left-2 w-3 h-3 rotate-45 bg-gray-800 border-l border-t border-gray-600" />
+                         <div className="flex justify-between items-center mb-1">
+                           <span className="text-[11px] font-mono px-1 py-0.5 rounded bg-gray-700 border border-gray-600">{selectedColorId}</span>
+                           <button className="text-[11px] px-2 py-0.5 rounded bg-gray-700 border border-gray-600 hover:bg-gray-600" onClick={() => setOpenPopover(null)}>Close</button>
+                         </div>
+                         <ColorPicker value={resolveSelectedHex()} onChange={applySelectedHex} />
+                       </div>
+                     </div>
+                   </>
                  )}
-                 <div className="hidden">
-                  <div className="text-[11px] font-medium mb-2 text-gray-300 flex justify-between items-center">
-                    <span>Edit Selected</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-gray-700 border border-gray-600 font-mono">{selectedColorId}</span>
-                  </div>
-                  <ColorPicker value={resolveSelectedHex()} onChange={applySelectedHex} />
-                </div>
-              </div>
-            </div>
+               </div>
+             </div>
 
             {/* Background Selection */}
             <div>

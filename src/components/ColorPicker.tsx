@@ -85,7 +85,7 @@ export default function ColorPicker({ value, onChange, initialAlpha = 1, classNa
 
   const handleAlphaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const a = clamp(Number(e.target.value), 0, 1)
-    setAlpha(a)
+    updateColor(hsva, a)
   }
 
   useEffect(() => {
@@ -167,8 +167,6 @@ export default function ColorPicker({ value, onChange, initialAlpha = 1, classNa
               step={0.01}
               value={alpha}
               onChange={handleAlphaChange}
-              onMouseUp={commitAlpha}
-              onTouchEnd={commitAlpha}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
             <div className="absolute top-1/2 -translate-y-1/2" style={{ left: `${alpha * 100}%` }}>
