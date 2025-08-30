@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import html2canvas from "html2canvas-pro";
 import { colorConfig } from "../constants/colors";
 import { generateSVG } from "../lib/generateSVG";
@@ -193,6 +193,29 @@ export default function ContributionCalendarWrapper({
 
   // selection state id pattern: base:<key> or legend:<index>
   const [selectedColorId, setSelectedColorId] = useState<string>('base:background')
+  const [openPopover, setOpenPopover] = useState<{ id: string; x: number; y: number } | null>(null)
+  const openerRef = useRef<HTMLButtonElement | null>(null)
+
+  // close on escape / resize / scroll
+  useEffect(() => {
+    if (!openPopover) return
+    const handle = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpenPopover(null) }
+    const close = () => setOpenPopover(null)
+    window.addEventListener('keydown', handle)
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
+    return () => {
+      window.removeEventListener('keydown', handle)
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
+    }
+  }, [openPopover])
+
+  useEffect(() => {
+    if (!openPopover && openerRef.current) {
+      openerRef.current.focus()
+    }
+  }, [openPopover])
   const baseColorEntries = Object.entries(customColors).filter(([k]) => k !== 'legendColors') as [keyof CustomThemeColors, string][]
   const resolveSelectedHex = () => {
     if (selectedColorId.startsWith('base:')) {
@@ -285,7 +308,7 @@ export default function ContributionCalendarWrapper({
                       <button
                         key={colorKey as string}
                         type="button"
-                        onClick={() => setSelectedColorId(id)}
+                        onClick={(e) => { setSelectedColorId(id); const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect(); openerRef.current = e.currentTarget; setOpenPopover({ id, x: rect.right + 8, y: rect.top + window.scrollY }); }}
                         className={`w-full flex items-center gap-2 px-2 py-1 rounded border text-left text-xs transition-colors ${selected ? 'border-blue-500 bg-blue-500/20' : 'border-gray-600 hover:border-gray-500 bg-gray-700/40 hover:bg-gray-700/60'}`}
                         title={`Select ${colorKey} color`}
                       >
@@ -303,7 +326,7 @@ export default function ContributionCalendarWrapper({
                       <button
                         key={id}
                         type="button"
-                        onClick={() => setSelectedColorId(id)}
+                        onClick={(e) => { setSelectedColorId(id); const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect(); openerRef.current = e.currentTarget; setOpenPopover({ id, x: rect.right + 8, y: rect.top + window.scrollY }); }}
                         className={`w-full flex items-center gap-2 px-2 py-1 rounded border text-left text-xs transition-colors ${selected ? 'border-blue-500 bg-blue-500/20' : 'border-gray-600 hover:border-gray-500 bg-gray-700/40 hover:bg-gray-700/60'}`}
                         title={`Select legend level ${i}`}
                       >
@@ -314,7 +337,27 @@ export default function ContributionCalendarWrapper({
                     )
                   })}
                 </div>
-                <div className="border border-gray-600 rounded p-2 bg-gray-750">
+                 {/* Popover container (portal-like) */}
+                 {openPopover && openPopover.id === selectedColorId && (
+                   <div
+                     className="fixed z-50"
+                     style={{ top: openPopover.y, left: openPopover.x }}
+                     role="dialog"
+                     aria-label="Color picker"
+                   >
+                     <div className="relative bg-gray-800 border border-gray-600 rounded shadow-lg p-2 w-60" onClick={e => e.stopPropagation()}>
+                       <div className="absolute -top-2 left-2 w-3 h-3 rotate-45 bg-gray-800 border-l border-t border-gray-600" />
+                       <div className="flex justify-between items-center mb-1">
+                         <span className="text-[11px] font-mono px-1 py-0.5 rounded bg-gray-700 border border-gray-600">{selectedColorId}</span>
+                         <button className="text-[11px] px-2 py-0.5 rounded bg-gray-700 border border-gray-600 hover:bg-gray-600" onClick={() => setOpenPopover(null)}>Close</button>
+                       </div>
+                       <ColorPicker value={resolveSelectedHex()} onChange={applySelectedHex} />
+                     </div>
+                     {/* click outside catcher */}
+                     <div className="fixed inset-0" onClick={() => setOpenPopover(null)} />
+                   </div>
+                 )}
+                 <div className="hidden">
                   <div className="text-[11px] font-medium mb-2 text-gray-300 flex justify-between items-center">
                     <span>Edit Selected</span>
                     <span className="text-[10px] px-2 py-0.5 rounded bg-gray-700 border border-gray-600 font-mono">{selectedColorId}</span>
