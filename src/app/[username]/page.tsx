@@ -4,7 +4,7 @@ import { Metadata } from "next";
 
 interface PageProps {
   params: Promise<{ username: string }>;
-  searchParams: Promise<{ token?: string }>;
+  searchParams: Promise<{ from?: string; to?: string }>;
 }
 
 export async function generateMetadata({
@@ -17,14 +17,15 @@ export async function generateMetadata({
   };
 }
 
-export default async function UserPage({ params }: PageProps) {
+export default async function UserPage({ params, searchParams }: PageProps) {
   const { username } = await params;
+  const { from, to } = await searchParams;
 
   let contributions: number[][] = [];
   let error: string | null = null;
 
   try {
-    contributions = await fetchGitHubContributions(username);
+    contributions = await fetchGitHubContributions(username, from, to);
   } catch (err) {
     error =
       err instanceof Error ? err.message : "Failed to fetch contributions";
@@ -55,7 +56,13 @@ export default async function UserPage({ params }: PageProps) {
             {username}&apos;s GitHub Contributions
           </h1>
           <p className="text-gray-400">
-            Contribution calendar for the past year
+            {from && to
+              ? `Contribution calendar from ${from} to ${to}`
+              : from
+                ? `Contributions from ${from}`
+                : to
+                  ? `Contributions up to ${to}`
+                  : "Contribution calendar for the past year"}
           </p>
         </div>
         <ContributionCalendarWrapper

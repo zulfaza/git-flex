@@ -30,9 +30,12 @@ const token = process.env.GITHUB_TOKEN;
 
 export async function fetchGitHubContributions(
   username: string,
+  fromDate?: string,
+  toDate?: string,
 ): Promise<number[][]> {
   // First, try to get basic user info without authentication
   const userResponse = await fetch(`https://api.github.com/users/${username}`);
+
   if (!userResponse.ok) {
     if (userResponse.status === 404) {
       throw new Error(`User ${username} not found`);
@@ -48,11 +51,11 @@ export async function fetchGitHubContributions(
 
   // If token is provided, fetch actual contribution data
   const query = `
-    query($username: String!) {
+    query($username: String!, $from: DateTime, $to: DateTime) {
       user(login: $username) {
         login
         name
-        contributionsCollection {
+        contributionsCollection(from: $from, to: $to) {
           contributionCalendar {
             totalContributions
             weeks {
@@ -72,12 +75,16 @@ export async function fetchGitHubContributions(
     Authorization: `Bearer ${token}`,
   };
 
+  const variables: Record<string, string> = { username };
+  if (fromDate) variables.from = fromDate;
+  if (toDate) variables.to = toDate;
+
   const response = await fetch("https://api.github.com/graphql", {
     method: "POST",
     headers,
     body: JSON.stringify({
       query,
-      variables: { username },
+      variables,
     }),
   });
 
