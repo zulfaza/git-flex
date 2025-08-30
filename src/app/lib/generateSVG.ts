@@ -1,13 +1,27 @@
 import { colorConfig } from "../constants/colors";
 import { MONTHS_SHORT_STRING } from "../constants/months";
 import { WEEKDAYS_SHORT_STRING } from "../constants/weekdays";
-import { getGridColor } from "./getGridColor";
+
+interface CustomThemeColors {
+  background: string;
+  text: string;
+  border: string;
+  header: string;
+  button: string;
+  buttonHover: string;
+  buttonText: string;
+  input: string;
+  inputBg: string;
+  inputText: string;
+  legendColors: string[];
+}
 
 type Params = {
   gridData: number[][];
   squareSize: number;
   currentBackground: keyof typeof colorConfig.backgrounds;
   currentTheme: keyof typeof colorConfig.themes;
+  customColors: CustomThemeColors;
   borderRadius: number;
   orientation: "horizontal" | "vertical";
 };
@@ -15,11 +29,12 @@ export const generateSVG = ({
   squareSize,
   currentBackground,
   currentTheme,
+  customColors,
   borderRadius,
   orientation,
   gridData,
 }: Params) => {
-  const theme = colorConfig.themes[currentTheme];
+  const theme = customColors;
   const gridCols = orientation === "horizontal" ? 53 : 7;
   const gridRows = orientation === "horizontal" ? 7 : 53;
   const totalWidth = gridCols * squareSize + 60; // Extra space for labels
@@ -118,7 +133,7 @@ export const generateSVG = ({
     row.forEach((level, colIndex) => {
       const x = 40 + colIndex * squareSize;
       const y = 60 + rowIndex * squareSize;
-      const color = getGridColor(level, currentTheme);
+      const color = customColors.legendColors[level] || customColors.legendColors[0];
       svg += `<rect x="${x}" y="${y}" width="${squareSize - 1}" height="${
         squareSize - 1
       }" fill="${color}" rx="2" ry="2"/>`;
@@ -135,7 +150,7 @@ export const generateSVG = ({
 
   [0, 1, 2, 3, 4].forEach((level, index) => {
     const x = 60 + index * 20;
-    const color = getGridColor(level, currentTheme);
+    const color = customColors.legendColors[level] || customColors.legendColors[0];
     svg += `<rect x="${x}" y="${legendY}" width="16" height="16" fill="${color}" rx="2" ry="2"/>`;
   });
 

@@ -6,6 +6,27 @@ import { colorConfig } from "../constants/colors";
 import { generateSVG } from "../lib/generateSVG";
 import ContributionCalendar from "./ContributionCalendar";
 
+interface CustomThemeColors {
+  background: string;
+  text: string;
+  border: string;
+  header: string;
+  button: string;
+  buttonHover: string;
+  buttonText: string;
+  input: string;
+  inputBg: string;
+  inputText: string;
+  legendColors: string[];
+}
+
+const createCustomThemeColors = (theme: keyof typeof colorConfig.themes): CustomThemeColors => {
+  return {
+    ...colorConfig.themes[theme],
+    legendColors: [...colorConfig.contributionColors[theme]]
+  };
+};
+
 type Orientation = "horizontal" | "vertical";
 
 interface ContributionCalendarWrapperProps {
@@ -31,6 +52,9 @@ export default function ContributionCalendarWrapper({
 }: ContributionCalendarWrapperProps) {
   const [currentTheme, setCurrentTheme] =
     useState<keyof typeof colorConfig.themes>("github-dark");
+  const [customColors, setCustomColors] = useState<CustomThemeColors>(
+    createCustomThemeColors("github-dark")
+  );
   const [currentBackground, setCurrentBackground] =
     useState<keyof typeof colorConfig.backgrounds>("solid");
   const [exportFormat, setExportFormat] = useState<"png" | "svg">("png");
@@ -38,11 +62,32 @@ export default function ContributionCalendarWrapper({
     useState<Orientation>(initialOrientation);
   const [padding, setPadding] = useState(32);
   const [borderRadius, setBorderRadius] = useState(16);
-  const [showWindowControls, setShowWindowControls] = useState(true);
+  const [title, setTitle] = useState("Contribution Activity");
+  const [showTitle, setShowTitle] = useState(true);
+  const [showLegend, setShowLegend] = useState(true);
   const [generatedSVG, setGeneratedSVG] = useState<string>("");
   const calendarRef = useRef<HTMLDivElement>(null);
-  const theme = colorConfig.themes[currentTheme];
+  const theme = customColors;
   const background = colorConfig.backgroundClasses[currentBackground];
+
+  const handleThemeChange = (newTheme: keyof typeof colorConfig.themes) => {
+    setCurrentTheme(newTheme);
+    setCustomColors(createCustomThemeColors(newTheme));
+  };
+
+  const handleColorChange = (colorKey: keyof CustomThemeColors, value: string) => {
+    setCustomColors(prev => ({
+      ...prev,
+      [colorKey]: value
+    }));
+  };
+
+  const handleLegendColorChange = (index: number, value: string) => {
+    setCustomColors(prev => ({
+      ...prev,
+      legendColors: prev.legendColors.map((color, i) => i === index ? value : color)
+    }));
+  };
 
   const gridData = useMemo(
     () => getGridData(orientation, contributions),
@@ -61,7 +106,7 @@ export default function ContributionCalendarWrapper({
       const exportBtn = document.querySelector(
         "[data-export-btn]",
       ) as HTMLButtonElement;
-      if (exportBtn) {
+      {
         exportBtn.textContent = "Exporting...";
         exportBtn.disabled = true;
       }
@@ -74,6 +119,7 @@ export default function ContributionCalendarWrapper({
           gridData,
           currentBackground,
           currentTheme,
+          customColors,
           borderRadius,
         });
         const blob = new Blob([svgContent], { type: "image/svg+xml" });
@@ -128,6 +174,7 @@ export default function ContributionCalendarWrapper({
       gridData,
       currentBackground,
       currentTheme,
+      customColors,
       borderRadius,
     });
     setGeneratedSVG(svgContent);
@@ -163,9 +210,9 @@ export default function ContributionCalendarWrapper({
             >
               Export {exportFormat.toUpperCase()}
             </button>
+            </div>
           </div>
         </div>
-      </div>
 
       {/* Main Layout */}
       <div className="flex gap-6">
@@ -178,7 +225,7 @@ export default function ContributionCalendarWrapper({
               <select
                 value={currentTheme}
                 onChange={(e) =>
-                  setCurrentTheme(
+                  handleThemeChange(
                     e.target.value as keyof typeof colorConfig.themes,
                   )
                 }
@@ -191,6 +238,70 @@ export default function ContributionCalendarWrapper({
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Custom Color Controls */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-white">Custom Colors</label>
+                <button
+                  onClick={() => setCustomColors(createCustomThemeColors(currentTheme))}
+                  className="px-2 py-1 text-xs rounded bg-gray-600 text-white hover:bg-gray-500 transition-colors"
+                  title="Reset to theme defaults"
+                >
+                  Reset
+                </button>
+              </div>
+              <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto pr-1 border border-gray-600 rounded p-2 bg-gray-750">
+                {/* Basic theme colors */}
+                {Object.entries(customColors).filter(([key]) => key !== 'legendColors').map(([colorKey, colorValue]) => (
+                  <div key={colorKey} className="flex items-center gap-2">
+                    <label className="text-xs font-medium text-gray-400 w-20 capitalize flex-shrink-0 text-left">
+                      {colorKey.replace(/([A-Z])/g, ' $1').trim()}
+                    </label>
+                    <input
+                      type="color"
+                      value={colorValue as string}
+                      onChange={(e) => handleColorChange(colorKey as keyof CustomThemeColors, e.target.value)}
+                      className="w-6 h-6 rounded border border-gray-600 cursor-pointer bg-transparent flex-shrink-0"
+                      title={`Pick color for ${colorKey}`}
+                    />
+                    <input
+                      type="text"
+                      value={colorValue as string}
+                      onChange={(e) => handleColorChange(colorKey as keyof CustomThemeColors, e.target.value)}
+                      className="flex-1 p-1 text-xs rounded border border-gray-600 bg-gray-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono"
+                      placeholder="#000000"
+                    />
+                  </div>
+                ))}
+                
+                {/* Legend colors */}
+                <div className="pt-2 border-t border-gray-600 mt-2">
+                  <div className="text-xs font-medium text-gray-400 mb-2">Legend Colors (0-4)</div>
+                  {customColors.legendColors.map((color, index) => (
+                    <div key={`legend-${index}`} className="flex items-center gap-2 mb-1">
+                      <label className="text-xs font-medium text-gray-400 w-20 flex-shrink-0 text-left">
+                        Level {index}
+                      </label>
+                      <input
+                        type="color"
+                        value={color}
+                        onChange={(e) => handleLegendColorChange(index, e.target.value)}
+                        className="w-6 h-6 rounded border border-gray-600 cursor-pointer bg-transparent flex-shrink-0"
+                        title={`Pick color for contribution level ${index}`}
+                      />
+                      <input
+                        type="text"
+                        value={color}
+                        onChange={(e) => handleLegendColorChange(index, e.target.value)}
+                        className="flex-1 p-1 text-xs rounded border border-gray-600 bg-gray-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono"
+                        placeholder="#000000"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Background Selection */}
@@ -283,18 +394,45 @@ export default function ContributionCalendarWrapper({
               />
             </div>
 
-            {/* Window Controls Toggle */}
+            {/* Title Controls */}
+            <div className="pt-4 border-t border-gray-600">
+              <div className="mb-4">
+                <label className="flex items-center text-sm font-medium mb-2">
+                  <input
+                    type="checkbox"
+                    checked={showTitle}
+                    onChange={(e) => setShowTitle(e.target.checked)}
+                    className="mr-2"
+                  />
+                  Show Title
+                </label>
+              </div>
+              {showTitle && (
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Title Text
+                  </label>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full p-2 rounded border border-gray-600 bg-gray-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    placeholder="Enter title text"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Legend Controls */}
             <div>
-              <label className="flex items-center">
+              <label className="flex items-center text-sm font-medium mb-2">
                 <input
                   type="checkbox"
-                  checked={showWindowControls}
-                  onChange={(e) => setShowWindowControls(e.target.checked)}
+                  checked={showLegend}
+                  onChange={(e) => setShowLegend(e.target.checked)}
                   className="mr-2"
                 />
-                <span className="text-sm font-medium">
-                  Show Window Controls
-                </span>
+                Show Legend
               </label>
             </div>
           </div>
@@ -307,14 +445,16 @@ export default function ContributionCalendarWrapper({
           <ContributionCalendar
             squareSize={squareSize}
             orientation={orientation}
-            currentTheme={currentTheme}
+            customColors={customColors}
             padding={padding}
             borderRadius={borderRadius}
-            showWindowControls={showWindowControls}
             gridData={gridData}
             gridCols={gridCols}
             gridRows={gridRows}
             getColSpanForTopLabel={getColSpanForTopLabel}
+            title={title}
+            showTitle={showTitle}
+            showLegend={showLegend}
           />
         </div>
       </div>

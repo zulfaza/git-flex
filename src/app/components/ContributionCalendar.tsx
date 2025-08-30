@@ -2,37 +2,57 @@
 
 import { WEEKDAYS_SHORT_STRING } from "../constants/weekdays";
 import { MONTHS_SHORT_STRING } from "../constants/months";
-import { getGridColor } from "../lib/getGridColor";
-import { colorConfig } from "../constants/colors";
 
 type Orientation = "horizontal" | "vertical";
+
+interface CustomThemeColors {
+  background: string;
+  text: string;
+  border: string;
+  header: string;
+  button: string;
+  buttonHover: string;
+  buttonText: string;
+  input: string;
+  inputBg: string;
+  inputText: string;
+  legendColors: string[];
+}
 
 interface ContributionCalendarProps {
   squareSize: number;
   orientation: Orientation;
-  currentTheme: keyof typeof colorConfig.themes;
+  customColors: CustomThemeColors;
   padding: number;
   borderRadius: number;
-  showWindowControls: boolean;
   gridData: number[][];
   gridCols: number;
   gridRows: number;
   getColSpanForTopLabel: (index: number, arrayLength: number) => number;
+  title?: string;
+  showTitle?: boolean;
+  showLegend?: boolean;
 }
 
 const ContributionCalendar = ({
   squareSize,
   orientation,
-  currentTheme,
+  customColors,
   padding,
   borderRadius,
-  showWindowControls,
   gridData,
   gridCols,
   gridRows,
   getColSpanForTopLabel,
+  title = "Contribution Activity",
+  showTitle = true,
+  showLegend = true,
 }: ContributionCalendarProps) => {
-  const theme = colorConfig.themes[currentTheme];
+  const theme = customColors;
+
+  const getCustomGridColor = (level: number) => {
+    return customColors.legendColors[level] || customColors.legendColors[0];
+  };
   const sideLabels =
     orientation === "horizontal" ? WEEKDAYS_SHORT_STRING : MONTHS_SHORT_STRING;
   const topLabels =
@@ -50,21 +70,14 @@ const ContributionCalendar = ({
             backgroundColor: theme.background,
           }}
         >
-          {/* Window Controls */}
-          {showWindowControls && (
-            <div className="absolute top-4 left-4 flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+          {/* Calendar Title */}
+          {showTitle && (
+            <div className="text-center mb-6 mt-6 min-h-[28px] flex items-center justify-center">
+              <h2 className="text-lg font-semibold" style={{ color: theme.text }}>
+                {title}
+              </h2>
             </div>
           )}
-
-          {/* Calendar Title */}
-          <div className="text-center mb-6 mt-6">
-            <h2 className="text-lg font-semibold" style={{ color: theme.text }}>
-              Contribution Activity
-            </h2>
-          </div>
 
           {/* Calendar Grid */}
           <div className="flex items-center justify-center">
@@ -138,7 +151,7 @@ const ContributionCalendar = ({
                         className="transition-all duration-300 hover:scale-125 w-full"
                         title={`${level} contributions`}
                         style={{
-                          backgroundColor: getGridColor(level, currentTheme),
+                          backgroundColor: getCustomGridColor(level),
                           borderRadius: "4px",
                           WebkitPrintColorAdjust: "exact",
                           printColorAdjust: "exact",
@@ -152,29 +165,31 @@ const ContributionCalendar = ({
           </div>
 
           {/* Legend */}
-          <div className="flex items-center justify-center mt-8 text-sm font-mono">
-            <span
-              className="mr-3 opacity-60 text-xs"
-              style={{ color: theme.text }}
-            >
-              Less
-            </span>
-            {[0, 1, 2, 3, 4].map((level) => (
-              <div
-                key={level}
-                className="w-4 h-4 rounded-sm mr-2 border border-white/30 dark:border-gray-600/50 transition-transform hover:scale-110"
-                style={{
-                  backgroundColor: getGridColor(level, currentTheme),
-                }}
-              />
-            ))}
-            <span
-              className="ml-1 opacity-60 text-xs"
-              style={{ color: theme.text }}
-            >
-              More
-            </span>
-          </div>
+          {showLegend && (
+            <div className="flex items-center justify-center mt-8 text-sm font-mono min-h-[32px]">
+              <span
+                className="mr-3 opacity-60 text-xs"
+                style={{ color: theme.text }}
+              >
+                Less
+              </span>
+              {[0, 1, 2, 3, 4].map((level) => (
+                <div
+                  key={level}
+                  className="w-4 h-4 rounded-sm mr-2 border border-white/30 dark:border-gray-600/50 transition-transform hover:scale-110"
+                  style={{
+                    backgroundColor: getCustomGridColor(level),
+                  }}
+                />
+              ))}
+              <span
+                className="ml-1 opacity-60 text-xs"
+                style={{ color: theme.text }}
+              >
+                More
+              </span>
+            </div>
+          )}
 
           {/* Footer */}
           <div className="text-center mt-6 text-xs opacity-40 font-mono">
