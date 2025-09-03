@@ -18,20 +18,55 @@ export function useGitHubContributions(
   return useQuery({
     queryKey: ['github-contributions', username, from, to],
     queryFn: async (): Promise<GitHubContributionsResponse> => {
-      const params = new URLSearchParams({ username })
-      if (from) params.append('from', from)
-      if (to) params.append('to', to)
+      try {
+        if (!username || username.trim() === '') {
+          throw new Error('Username is required')
+        }
 
-      const response = await fetch(`/api/github/contributions?${params}`)
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        const params = new URLSearchParams({ username: username.trim() })
+        if (from) params.append('from', from)
+        if (to) params.append('to', to)
+
+        const response = await fetch(`/api/github/contributions?${params}`)
+        
+        if (!response.ok) {
+          let errorMessage = `HTTP error! status: ${response.status}`
+          
+          try {
+            const errorData = await response.json()
+            if (errorData.error) {
+              errorMessage = errorData.error
+            }
+          } catch {
+            // If we can't parse the error response, use the default message
+          }
+          
+          throw new Error(errorMessage)
+        }
+        
+        const data = await response.json()
+        
+        // Ensure the response has the expected structure
+        if (!data) {
+          throw new Error('No data received from API')
+        }
+        
+        return data
+      } catch (error) {
+        console.error('Error in useGitHubContributions:', error)
+        throw error
       }
-      
-      return response.json()
     },
-    enabled: !!username,
+    enabled: !!username && username.trim() !== '',
     staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 2,
+    retry: (failureCount, error) => {
+      // Don't retry on client errors (4xx)
+      if (error instanceof Error && error.message.includes('status: 4')) {
+        return false
+      }
+      // Retry up to 2 times for server errors (5xx) or network errors
+      return failureCount < 2
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   })
 }
