@@ -1,65 +1,77 @@
+import { useMemo } from "react";
+
+import ContributionCalendar from "@/components/ContributionCalendar";
+import type { ContributionGridCell } from "@/lib/githubApi";
+
+type Orientation = "horizontal" | "vertical";
+
 interface ContributionSkeletonProps {
-  squareSize: number
-  orientation: 'horizontal' | 'vertical'
-  padding: number
-  borderRadius: number
+  orientation: Orientation;
+  padding: number;
+  borderRadius: number;
+  gridData: (ContributionGridCell | null)[][];
+  gridCols: number;
+  showTitle: boolean;
+  showLegend: boolean;
+  title: string;
 }
 
+const skeletonTheme = {
+  background: "#111827",
+  wrapperBackground: "#0f172a",
+  text: "#9ca3af",
+  border: "#1f2937",
+  legendColors: ["#111827", "#1f2937", "#27303d", "#374151", "#4b5563"],
+};
+
+const buildSkeletonGrid = (
+  gridData: (ContributionGridCell | null)[][],
+): (ContributionGridCell | null)[][] => {
+  return gridData.map((row) => {
+    if (!row) {
+      return [];
+    }
+
+    return row.map((cell) => {
+      if (!cell) {
+        return null;
+      }
+
+      return {
+        date: "",
+        contributionCount: 0,
+        level: 2,
+      };
+    });
+  });
+};
+
 export default function ContributionSkeleton({
-  squareSize,
   orientation,
   padding,
-  borderRadius
+  borderRadius,
+  gridData,
+  gridCols,
+  showLegend,
+  showTitle,
+  title,
 }: ContributionSkeletonProps) {
-  const gridCols = orientation === 'horizontal' ? 53 : 7
-  const gridRows = orientation === 'horizontal' ? 7 : 53
-  
+  const placeholderGrid = useMemo(
+    () => buildSkeletonGrid(gridData),
+    [gridData],
+  );
+
   return (
-    <div 
-      className="bg-gray-800 rounded-lg border border-gray-700 animate-pulse"
-      style={{ 
-        padding: `${padding}px`,
-        borderRadius: `${borderRadius}px`
-      }}
-    >
-      <div className="mb-4">
-        <div className="h-6 bg-gray-700 rounded w-64 mb-2"></div>
-        <div className="h-4 bg-gray-700 rounded w-48"></div>
-      </div>
-      
-      <div className="flex flex-col gap-1">
-        {Array.from({ length: gridRows }, (_, rowIndex) => (
-          <div key={rowIndex} className="flex gap-1">
-            {Array.from({ length: gridCols }, (_, colIndex) => (
-              <div
-                key={colIndex}
-                className="bg-gray-700 rounded-sm animate-pulse"
-                style={{
-                  width: `${squareSize}px`,
-                  height: `${squareSize}px`,
-                  borderRadius: `${borderRadius}px`
-                }}
-              />
-            ))}
-          </div>
-        ))}
-      </div>
-      
-      <div className="mt-4 flex items-center justify-between">
-        <div className="h-4 bg-gray-700 rounded w-24"></div>
-        <div className="flex gap-1">
-          {Array.from({ length: 5 }, (_, i) => (
-            <div
-              key={i}
-              className="bg-gray-700 rounded-sm"
-              style={{
-                width: `${squareSize}px`,
-                height: `${squareSize}px`
-              }}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  )
+    <ContributionCalendar
+      orientation={orientation}
+      customColors={skeletonTheme}
+      padding={padding}
+      borderRadius={borderRadius}
+      gridData={placeholderGrid}
+      gridCols={gridCols}
+      title={title}
+      showTitle={showTitle}
+      showLegend={showLegend}
+    />
+  );
 }

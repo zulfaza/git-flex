@@ -2,9 +2,6 @@
 
 ## Build/Lint/Test Commands
 
-- **Development**: `npm run dev` (Next.js with Turbopack)
-- **Build**: `npm run build` (Next.js with Turbopack)
-- **Start**: `npm run start` (Production server)
 - **Lint**: `npm run lint` (ESLint with Next.js rules)
 - **Test**: No test framework configured yet
 
