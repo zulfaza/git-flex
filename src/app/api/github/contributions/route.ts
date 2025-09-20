@@ -5,8 +5,8 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const username = searchParams.get("username");
-    const from = searchParams.get("from") || undefined;
-    const to = searchParams.get("to") || undefined;
+    const fromParam = searchParams.get("from") || undefined;
+    const toParam = searchParams.get("to") || undefined;
 
     if (!username) {
       return NextResponse.json(
@@ -14,6 +14,10 @@ export async function GET(request: NextRequest) {
         { status: 400 },
       );
     }
+
+    // Convert date strings to proper ISO DateTime format
+    const from = fromParam ? new Date(fromParam).toISOString() : undefined;
+    const to = toParam ? new Date(toParam).toISOString() : undefined;
 
     const contributions = await fetchGitHubContributions(username, from, to);
 

@@ -4,25 +4,44 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import ContributionCalendarWrapper from "@/components/ContributionCalendarWrapper";
 import { useGitHubContributions } from "@/hooks/useGitHubContributions";
-import type { UserPageClientProps } from "@/types/calendar";
-
-const years = [2021, 2022, 2023, 2024, 2025];
+import { getDateRangeFromToday } from "@/constants/months";
+import type { UserPageClientProps, DateRangeOption } from "@/types/calendar";
 
 export default function UserPageClient({ username }: UserPageClientProps) {
   const searchParams = useSearchParams();
-  const [selectedYear, setSelectedYear] = useState(2025);
+  const [dateRangeOption, setDateRangeOption] = useState<DateRangeOption>('year-ago');
 
   const urlFrom = searchParams.get("from");
   const urlTo = searchParams.get("to");
 
-  const from = urlFrom || `${selectedYear}-01-01T00:00:00.000Z`;
-  const to = urlTo || `${selectedYear}-12-31T23:59:59.999Z`;
+  const getDateRange = () => {
+    if (urlFrom || urlTo) {
+      return {
+        from: urlFrom || undefined,
+        to: urlTo || undefined
+      };
+    }
+
+    if (dateRangeOption === 'year-ago') {
+      return getDateRangeFromToday(365);
+    }
+
+    // For specific years
+    const year = parseInt(dateRangeOption);
+    return {
+      from: `${year}-01-01T00:00:00.000Z`,
+      to: `${year}-12-31T23:59:59.999Z`
+    };
+  };
+
+  const { from, to } = getDateRange();
 
   useEffect(() => {
     if (urlFrom && !urlTo) {
       const yearFromUrl = new Date(urlFrom).getFullYear();
-      if (years.includes(yearFromUrl)) {
-        setSelectedYear(yearFromUrl);
+      const yearOption = yearFromUrl.toString() as DateRangeOption;
+      if (['2021', '2022', '2023', '2024', '2025'].includes(yearOption)) {
+        setDateRangeOption(yearOption);
       }
     }
   }, [urlFrom, urlTo]);
@@ -55,13 +74,15 @@ export default function UserPageClient({ username }: UserPageClientProps) {
                   "Failed to fetch contributions"}
               </span>
             ) : from && to ? (
-              `Contribution calendar from ${from} to ${to}`
+              `Contribution calendar from ${new Date(from).toLocaleDateString()} to ${new Date(to).toLocaleDateString()}`
             ) : from ? (
-              `Contributions from ${from}`
+              `Contributions from ${new Date(from).toLocaleDateString()}`
             ) : to ? (
-              `Contributions up to ${to}`
+              `Contributions up to ${new Date(to).toLocaleDateString()}`
+            ) : dateRangeOption === 'year-ago' ? (
+              "Contribution calendar for the past 365 days"
             ) : (
-              "Contribution calendar for the past year"
+              `Contribution calendar for ${dateRangeOption}`
             )}
           </p>
         </div>
@@ -69,9 +90,9 @@ export default function UserPageClient({ username }: UserPageClientProps) {
           contributions={contributions}
           isLoading={isLoading}
           squareSize={12}
-          selectedYear={selectedYear}
-          onYearChange={setSelectedYear}
-          showYearSelector={!urlFrom && !urlTo}
+          dateRangeOption={dateRangeOption}
+          onDateRangeChange={setDateRangeOption}
+          showDateRangeSelector={!urlFrom && !urlTo}
         />
       </div>
     </div>

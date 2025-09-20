@@ -1,7 +1,10 @@
 "use client";
 
 import { WEEKDAYS_SHORT_STRING } from "../constants/weekdays";
-import { MONTHS_SHORT_STRING } from "../constants/months";
+import {
+  MONTHS_SHORT_STRING,
+  getMonthLabelsFromData,
+} from "../constants/months";
 import type { ContributionGridCell } from "../lib/githubApi";
 
 type Orientation = "horizontal" | "vertical";
@@ -58,32 +61,23 @@ const ContributionCalendar = ({
     label: string;
     colspan: number;
   }> => {
-    const monthLabels: Array<{ label: string; colspan: number }> = [];
-
     if (orientation === "horizontal") {
-      // For horizontal orientation, show months across the top
-      const weeksPerMonth = [5, 4, 5, 4, 4, 5, 4, 4, 5, 4, 4, 5]; // Approximate weeks per month
-
-      MONTHS_SHORT_STRING.forEach((month, index) => {
-        monthLabels.push({
-          label: month,
-          colspan: weeksPerMonth[index] || 4,
-        });
-      });
+      // For horizontal orientation, use dynamic month labels based on actual data
+      return getMonthLabelsFromData(gridData);
     } else {
       // For vertical orientation, show months down the side
       // Each month spans approximately 4-5 weeks (vertically)
       const weeksPerMonth = [5, 4, 5, 4, 4, 5, 4, 4, 5, 4, 4, 5];
 
+      const monthLabels: Array<{ label: string; colspan: number }> = [];
       MONTHS_SHORT_STRING.forEach((month, index) => {
         monthLabels.push({
           label: month,
           colspan: weeksPerMonth[index] || 4,
         });
       });
+      return monthLabels;
     }
-
-    return monthLabels;
   };
 
   const sideLabels = WEEKDAYS_SHORT_STRING;
@@ -139,7 +133,7 @@ const ContributionCalendar = ({
                     {/* Month labels */}
                     {getMonthLabelsWithColspan().map((month, index) => (
                       <td
-                        key={month.label}
+                        key={`${month.label}-${index}`}
                         className="text-xs relative"
                         colSpan={month.colspan}
                         style={{
@@ -291,11 +285,38 @@ const ContributionCalendar = ({
                               bottom: "-3px",
                             }}
                           >
-                            {weekIndex % 4 === 0
-                              ? MONTHS_SHORT_STRING[
-                                  Math.floor(weekIndex / 4.3)
-                                ] || ""
-                              : ""}
+                            {(() => {
+                              // Get first valid date from this week to determine month
+                              const firstValidCell = weekData?.find(
+                                (cell) => cell?.date,
+                              );
+                              if (!firstValidCell?.date) return "";
+
+                              const weekDate = new Date(firstValidCell.date);
+                              const monthName =
+                                MONTHS_SHORT_STRING[weekDate.getMonth()];
+
+                              // Show month label only at start of new month or every 4 weeks
+                              if (weekIndex === 0) return monthName;
+
+                              // Check if this is the start of a new month
+                              const prevWeekData = gridData[weekIndex - 1];
+                              const prevFirstValidCell = prevWeekData?.find(
+                                (cell) => cell?.date,
+                              );
+                              if (prevFirstValidCell?.date) {
+                                const prevWeekDate = new Date(
+                                  prevFirstValidCell.date,
+                                );
+                                const prevMonthName =
+                                  MONTHS_SHORT_STRING[prevWeekDate.getMonth()];
+                                if (prevMonthName !== monthName) {
+                                  return monthName;
+                                }
+                              }
+
+                              return weekIndex % 4 === 0 ? monthName : "";
+                            })()}
                           </span>
                         </td>
 

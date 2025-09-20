@@ -10,13 +10,15 @@ export interface CustomThemeColors {
 
 export type Orientation = "horizontal" | "vertical";
 
+export type DateRangeOption = 'year-ago' | '2021' | '2022' | '2023' | '2024' | '2025';
+
 export interface ContributionCalendarWrapperProps {
   contributions: (ContributionGridCell | null)[][];
   isLoading?: boolean;
   squareSize?: number;
-  selectedYear?: number;
-  onYearChange?: (year: number) => void;
-  showYearSelector?: boolean;
+  dateRangeOption?: DateRangeOption;
+  onDateRangeChange?: (option: DateRangeOption) => void;
+  showDateRangeSelector?: boolean;
 }
 
 export interface UserPageClientProps {

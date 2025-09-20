@@ -12,15 +12,16 @@ import { useCalendarStore } from "@/stores/calendarStore";
 import type {
   ContributionCalendarWrapperProps,
   CustomThemeColors,
+  DateRangeOption,
 } from "@/types/calendar";
 
 export default function ContributionCalendarWrapper({
   contributions,
   isLoading = false,
   squareSize = 12,
-  selectedYear = 2025,
-  onYearChange,
-  showYearSelector = false,
+  dateRangeOption = 'year-ago',
+  onDateRangeChange,
+  showDateRangeSelector = false,
 }: ContributionCalendarWrapperProps) {
   const {
     currentTheme,
@@ -105,21 +106,22 @@ export default function ContributionCalendarWrapper({
               </select>
             </div>
 
-            {showYearSelector && onYearChange && (
+            {showDateRangeSelector && onDateRangeChange && (
               <div>
                 <label className="block text-sm font-medium mb-2 text-white">
-                  Year
+                  Time Period
                 </label>
                 <select
-                  value={selectedYear}
-                  onChange={(e) => onYearChange(parseInt(e.target.value))}
+                  value={dateRangeOption}
+                  onChange={(e) => onDateRangeChange(e.target.value as DateRangeOption)}
                   className="w-full p-2 rounded border border-gray-600 bg-gray-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 >
-                  {[2021, 2022, 2023, 2024, 2025].map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
+                  <option value="year-ago">Past 365 Days</option>
+                  <option value="2025">2025</option>
+                  <option value="2024">2024</option>
+                  <option value="2023">2023</option>
+                  <option value="2022">2022</option>
+                  <option value="2021">2021</option>
                 </select>
               </div>
             )}
