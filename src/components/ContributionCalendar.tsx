@@ -196,12 +196,12 @@ const ContributionCalendar = ({
                     ))}
                   </tr>
                 </thead>
-               )}
+              )}
 
               {/* No header for grid layouts - they use inline labels */}
 
               <tbody>
-                {layout === "horizontal" && 
+                {layout === "horizontal" &&
                   sideLabels.map((dayLabel, dayIndex) => (
                     <tr key={dayLabel} style={{ height: "15px" }}>
                       {/* Weekday label */}
@@ -218,8 +218,7 @@ const ContributionCalendar = ({
                           className="absolute"
                           aria-hidden="true"
                           style={{
-                            clipPath:
-                              dayIndex % 2 === 0 ? "none" : "circle(0)",
+                            clipPath: dayIndex % 2 === 0 ? "none" : "circle(0)",
                             bottom: "-3px",
                           }}
                         >
@@ -232,9 +231,7 @@ const ContributionCalendar = ({
                         cell ? (
                           <td
                             key={`${dayIndex}-${colIndex}`}
-                            tabIndex={
-                              colIndex === 1 && dayIndex === 0 ? 0 : -1
-                            }
+                            tabIndex={colIndex === 1 && dayIndex === 0 ? 0 : -1}
                             aria-selected="false"
                             aria-describedby={`contribution-graph-legend-level-${cell.level}`}
                             style={{
@@ -269,114 +266,121 @@ const ContributionCalendar = ({
                         <td key={`empty-${dayIndex}-${emptyIndex}`} />
                       ))}
                     </tr>
-                  ))
-                }
+                  ))}
 
-                {layout === "vertical" && 
+                {layout === "vertical" &&
                   gridData.map((weekData, weekIndex) => (
-                      <tr key={weekIndex} style={{ height: "30px" }}>
-                        {/* Month label for vertical orientation */}
-                        <td
-                          className="text-xs relative"
+                    <tr key={weekIndex} style={{ height: "30px" }}>
+                      {/* Month label for vertical orientation */}
+                      <td
+                        className="text-xs relative"
+                        style={{
+                          position: "relative",
+                          color: theme.text,
+                          opacity: 0.7,
+                        }}
+                      >
+                        <span className="sr-only">Week {weekIndex + 1}</span>
+                        <span
+                          aria-hidden="true"
                           style={{
-                            position: "relative",
-                            color: theme.text,
-                            opacity: 0.7,
+                            position: "absolute",
+                            bottom: "10px",
                           }}
                         >
-                          <span className="sr-only">Week {weekIndex + 1}</span>
-                          <span
-                            aria-hidden="true"
+                          {(() => {
+                            // Get first valid date from this week to determine month
+                            const firstValidCell = weekData?.find(
+                              (cell) => cell?.date,
+                            );
+
+                            if (!firstValidCell?.date) {
+                              return "";
+                            }
+
+                            const weekDate = new Date(firstValidCell.date);
+                            const monthName =
+                              MONTHS_SHORT_STRING[weekDate.getMonth()];
+
+                            // Show month label only at start of new month or every 4 weeks
+                            if (weekIndex === 0) {
+                              return monthName;
+                            }
+
+                            // Check if this is the start of a new month
+                            const prevWeekData = gridData[weekIndex - 1];
+                            const prevFirstValidCell = prevWeekData?.find(
+                              (cell) => cell?.date,
+                            );
+                            if (prevFirstValidCell?.date) {
+                              const prevWeekDate = new Date(
+                                prevFirstValidCell.date,
+                              );
+                              const prevMonthName =
+                                MONTHS_SHORT_STRING[prevWeekDate.getMonth()];
+                              if (prevMonthName !== monthName) {
+                                return monthName;
+                              }
+                            }
+                            return "";
+                          })()}
+                        </span>
+                      </td>
+
+                      {/* Contribution cells for vertical orientation */}
+                      {weekData?.map((cell, dayIndex) =>
+                        cell ? (
+                          <td
+                            key={`${weekIndex}-${dayIndex}`}
+                            tabIndex={
+                              dayIndex === 1 && weekIndex === 0 ? 0 : -1
+                            }
+                            aria-selected="false"
+                            aria-describedby={`contribution-graph-legend-level-${cell.level}`}
                             style={{
-                              position: "absolute",
-                              bottom: "-3px",
+                              width: "30px",
+                              backgroundColor: getCustomGridColor(cell.level),
+                              WebkitPrintColorAdjust: "exact",
+                              printColorAdjust: "exact",
                             }}
-                          >
-                            {(() => {
-                              // Get first valid date from this week to determine month
-                              const firstValidCell = weekData?.find(
-                                (cell) => cell?.date,
-                              );
-                              if (!firstValidCell?.date) return "";
+                            data-date={cell.date}
+                            data-level={cell.level}
+                            role="gridcell"
+                            className="transition-all duration-300 hover:scale-125 rounded-xs"
+                            title={
+                              cell.date
+                                ? `${cell.contributionCount} contributions on ${formatDate(cell.date)}`
+                                : `${cell.contributionCount} contributions`
+                            }
+                          />
+                        ) : (
+                          <td key={`${weekIndex}-${dayIndex}`} />
+                        ),
+                      )}
 
-                              const weekDate = new Date(firstValidCell.date);
-                              const monthName =
-                                MONTHS_SHORT_STRING[weekDate.getMonth()];
+                      {/* Fill empty cells if needed for vertical */}
+                      {Array.from({
+                        length: Math.max(0, 7 - (weekData?.length || 0)),
+                      }).map((_, emptyIndex) => (
+                        <td key={`empty-${weekIndex}-${emptyIndex}`} />
+                      ))}
+                    </tr>
+                  ))}
 
-                              // Show month label only at start of new month or every 4 weeks
-                              if (weekIndex === 0) return monthName;
-
-                              // Check if this is the start of a new month
-                              const prevWeekData = gridData[weekIndex - 1];
-                              const prevFirstValidCell = prevWeekData?.find(
-                                (cell) => cell?.date,
-                              );
-                              if (prevFirstValidCell?.date) {
-                                const prevWeekDate = new Date(
-                                  prevFirstValidCell.date,
-                                );
-                                const prevMonthName =
-                                  MONTHS_SHORT_STRING[prevWeekDate.getMonth()];
-                                if (prevMonthName !== monthName) {
-                                  return monthName;
-                                }
-                              }
-
-                              return weekIndex % 4 === 0 ? monthName : "";
-                            })()}
-                          </span>
-                        </td>
-
-                        {/* Contribution cells for vertical orientation */}
-                        {weekData?.map((cell, dayIndex) =>
-                          cell ? (
-                            <td
-                              key={`${weekIndex}-${dayIndex}`}
-                              tabIndex={
-                                dayIndex === 1 && weekIndex === 0 ? 0 : -1
-                              }
-                              aria-selected="false"
-                              aria-describedby={`contribution-graph-legend-level-${cell.level}`}
-                              style={{
-                                width: "30px",
-                                backgroundColor: getCustomGridColor(cell.level),
-                                WebkitPrintColorAdjust: "exact",
-                                printColorAdjust: "exact",
-                              }}
-                              data-date={cell.date}
-                              data-level={cell.level}
-                              role="gridcell"
-                              className="transition-all duration-300 hover:scale-125 rounded-xs"
-                              title={
-                                cell.date
-                                  ? `${cell.contributionCount} contributions on ${formatDate(cell.date)}`
-                                  : `${cell.contributionCount} contributions`
-                              }
-                            />
-                          ) : (
-                            <td key={`${weekIndex}-${dayIndex}`} />
-                          ),
-                        )}
-
-                        {/* Fill empty cells if needed for vertical */}
-                        {Array.from({
-                          length: Math.max(0, 7 - (weekData?.length || 0)),
-                        }).map((_, emptyIndex) => (
-                          <td key={`empty-${weekIndex}-${emptyIndex}`} />
-                        ))}
-                      </tr>
-                     ))
-                  }
-
-                {(layout === "3x4" || layout === "4x3") && 
+                {(layout === "3x4" || layout === "4x3") &&
                   gridData.map((dayRow, dayIndex) => (
-                    <tr key={dayIndex} style={{ 
-                      height: "15px",
-                      ...(dayIndex % 7 === 0 && dayIndex > 0 ? { 
-                        borderTop: `2px solid ${theme.border}`, 
-                        paddingTop: "4px" 
-                      } : {})
-                    }}>
+                    <tr
+                      key={dayIndex}
+                      style={{
+                        height: "15px",
+                        ...(dayIndex % 7 === 0 && dayIndex > 0
+                          ? {
+                              borderTop: `2px solid ${theme.border}`,
+                              paddingTop: "4px",
+                            }
+                          : {}),
+                      }}
+                    >
                       {/* Weekday label */}
                       <td
                         className="text-xs relative"
@@ -387,18 +391,26 @@ const ContributionCalendar = ({
                         }}
                       >
                         <span className="sr-only">
-                          {dayIndex % 7 === 0 ? sideLabels[0] : 
-                           dayIndex % 7 === 1 ? sideLabels[1] :
-                           dayIndex % 7 === 2 ? sideLabels[2] :
-                           dayIndex % 7 === 3 ? sideLabels[3] :
-                           dayIndex % 7 === 4 ? sideLabels[4] :
-                           dayIndex % 7 === 5 ? sideLabels[5] : sideLabels[6]}
+                          {dayIndex % 7 === 0
+                            ? sideLabels[0]
+                            : dayIndex % 7 === 1
+                              ? sideLabels[1]
+                              : dayIndex % 7 === 2
+                                ? sideLabels[2]
+                                : dayIndex % 7 === 3
+                                  ? sideLabels[3]
+                                  : dayIndex % 7 === 4
+                                    ? sideLabels[4]
+                                    : dayIndex % 7 === 5
+                                      ? sideLabels[5]
+                                      : sideLabels[6]}
                         </span>
                         <span
                           className="absolute"
                           aria-hidden="true"
                           style={{
-                            clipPath: dayIndex % 14 === 0 ? "none" : "circle(0)",
+                            clipPath:
+                              dayIndex % 14 === 0 ? "none" : "circle(0)",
                             bottom: "-3px",
                           }}
                         >
@@ -411,9 +423,7 @@ const ContributionCalendar = ({
                         cell ? (
                           <td
                             key={`${dayIndex}-${colIndex}`}
-                            tabIndex={
-                              colIndex === 1 && dayIndex === 0 ? 0 : -1
-                            }
+                            tabIndex={colIndex === 1 && dayIndex === 0 ? 0 : -1}
                             aria-selected="false"
                             aria-describedby={`contribution-graph-legend-level-${cell.level}`}
                             style={{
@@ -440,16 +450,12 @@ const ContributionCalendar = ({
 
                       {/* Fill empty cells if needed */}
                       {Array.from({
-                        length: Math.max(
-                          0,
-                          gridCols - (dayRow?.length || 0),
-                        ),
+                        length: Math.max(0, gridCols - (dayRow?.length || 0)),
                       }).map((_, emptyIndex) => (
                         <td key={`empty-${dayIndex}-${emptyIndex}`} />
                       ))}
                     </tr>
-                  ))
-                }
+                  ))}
               </tbody>
             </table>
           </div>
