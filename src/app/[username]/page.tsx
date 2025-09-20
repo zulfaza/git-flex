@@ -1,22 +1,22 @@
-import UserPageWrapper from "@/components/UserPageClient"
-import { Metadata } from "next"
+import UserPageWrapper from "@/components/UserPageClient";
+import { Metadata } from "next";
 
 interface PageProps {
-  params: Promise<{ username: string }>
+  params: Promise<{ username: string }>;
 }
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const { username } = await params
+  const { username } = await params;
   return {
-    title: `${username} - GitFlex`,
+    title: `GitFlex - ${username}`,
     description: `GitHub contribution calendar for ${username}`,
-  }
+  };
 }
 
 export default async function UserPage({ params }: PageProps) {
-  const { username } = await params
-  
-  return <UserPageWrapper username={username} />
+  const { username } = await params;
+
+  return <UserPageWrapper username={username} />;
 }

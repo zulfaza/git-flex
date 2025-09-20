@@ -15,18 +15,18 @@ type Params = {
   squareSize: number;
   customColors: CustomThemeColors;
   borderRadius: number;
-  orientation: "horizontal" | "vertical";
+  layout: "horizontal" | "vertical" | "3x4" | "4x3";
 };
 export const generateSVG = ({
   squareSize,
   customColors,
   borderRadius,
-  orientation,
+  layout,
   gridData,
 }: Params) => {
   const theme = customColors;
-  const gridCols = orientation === "horizontal" ? 53 : 7;
-  const gridRows = orientation === "horizontal" ? 7 : 53;
+  const gridCols = layout === "horizontal" ? 53 : layout === "vertical" ? 7 : layout === "3x4" ? 13 : 17;
+  const gridRows = layout === "horizontal" ? 7 : layout === "vertical" ? 53 : layout === "3x4" ? 28 : 21;
   const totalWidth = gridCols * squareSize + 60; // Extra space for labels
   const totalHeight = gridRows * squareSize + 120; // Extra space for title and legend
 
@@ -46,10 +46,10 @@ export const generateSVG = ({
 
   // Side labels
   const sideLabels =
-    orientation === "horizontal" ? WEEKDAYS_SHORT_STRING : MONTHS_SHORT_STRING;
+    layout === "horizontal" ? WEEKDAYS_SHORT_STRING : MONTHS_SHORT_STRING;
 
   sideLabels.forEach((label, index) => {
-    if (index % (orientation === "horizontal" ? 2 : 1) === 0) {
+    if (index % (layout === "horizontal" ? 2 : 1) === 0) {
       const y = 60 + index * squareSize + squareSize / 2;
       svg += `<text x="25" y="${
         y + 4
@@ -61,16 +61,16 @@ export const generateSVG = ({
 
   // Top labels
   const topLabels =
-    orientation === "horizontal" ? MONTHS_SHORT_STRING : WEEKDAYS_SHORT_STRING;
+    layout === "horizontal" ? MONTHS_SHORT_STRING : WEEKDAYS_SHORT_STRING;
   topLabels.forEach((label, index) => {
     if (
-      (orientation === "horizontal" && index % 2 === 0) ||
-      (orientation === "vertical" && index % 3 === 0)
+      (layout === "horizontal" && index % 2 === 0) ||
+      (layout === "vertical" && index % 3 === 0)
     ) {
       const x =
         40 +
-        (index * (orientation === "horizontal" ? 4.4 : 7.5) * squareSize) /
-          (orientation === "horizontal" ? 1 : 1);
+        (index * (layout === "horizontal" ? 4.4 : 7.5) * squareSize) /
+          (layout === "horizontal" ? 1 : 1);
       svg += `<text x="${x}" y="55" text-anchor="start" font-family="monospace" font-size="10" fill="${theme.text}" opacity="0.7">${label}</text>`;
     }
   });

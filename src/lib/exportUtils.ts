@@ -1,12 +1,12 @@
 import html2canvas from "html2canvas-pro"
 import { generateSVG } from "@/lib/generateSVG"
 import type { ContributionGridCell } from "@/lib/githubApi"
-import type { CustomThemeColors, Orientation } from "@/types/calendar"
+import type { CustomThemeColors, Layout } from "@/types/calendar"
 
 interface ExportCalendarParams {
   calendarRef: React.RefObject<HTMLDivElement | null>
   exportFormat: "png" | "svg"
-  orientation: Orientation
+  layout: Layout
   squareSize: number
   gridData: (ContributionGridCell | null)[][]
   customColors: CustomThemeColors
@@ -16,7 +16,7 @@ interface ExportCalendarParams {
 export const exportCalendar = async ({
   calendarRef,
   exportFormat,
-  orientation,
+  layout,
   squareSize,
   gridData,
   customColors,
@@ -37,7 +37,7 @@ export const exportCalendar = async ({
 
     if (exportFormat === "svg") {
       const svgContent = generateSVG({
-        orientation,
+        layout,
         squareSize,
         gridData,
         customColors,

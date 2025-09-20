@@ -2,7 +2,7 @@ import { create } from 'zustand'
 
 interface CalendarState {
   exportFormat: "png" | "svg"
-  orientation: "horizontal" | "vertical"
+  layout: "horizontal" | "vertical" | "3x4" | "4x3"
   padding: number
   borderRadius: number
   wrapperPaddingX: number
@@ -11,7 +11,7 @@ interface CalendarState {
   showTitle: boolean
   showLegend: boolean
   setExportFormat: (format: "png" | "svg") => void
-  setOrientation: (orientation: "horizontal" | "vertical") => void
+  setLayout: (layout: "horizontal" | "vertical" | "3x4" | "4x3") => void
   setPadding: (padding: number) => void
   setBorderRadius: (borderRadius: number) => void
   setWrapperPaddingX: (paddingX: number) => void
@@ -20,12 +20,12 @@ interface CalendarState {
   setShowTitle: (show: boolean) => void
   setShowLegend: (show: boolean) => void
   resetCalendarSettings: () => void
-  initializeOrientation: (orientation: "horizontal" | "vertical") => void
+  initializeLayout: (layout: "horizontal" | "vertical" | "3x4" | "4x3") => void
 }
 
 const initialState = {
   exportFormat: "png" as const,
-  orientation: "horizontal" as const,
+  layout: "horizontal" as const,
   padding: 16,
   borderRadius: 0,
   wrapperPaddingX: 0,
@@ -38,7 +38,7 @@ const initialState = {
 export const useCalendarStore = create<CalendarState>((set) => ({
   ...initialState,
   setExportFormat: (exportFormat) => set({ exportFormat }),
-  setOrientation: (orientation) => set({ orientation }),
+  setLayout: (layout) => set({ layout }),
   setPadding: (padding) => set({ padding }),
   setBorderRadius: (borderRadius) => set({ borderRadius }),
   setWrapperPaddingX: (wrapperPaddingX) => set({ wrapperPaddingX }),
@@ -47,5 +47,5 @@ export const useCalendarStore = create<CalendarState>((set) => ({
   setShowTitle: (showTitle) => set({ showTitle }),
   setShowLegend: (showLegend) => set({ showLegend }),
   resetCalendarSettings: () => set(initialState),
-  initializeOrientation: (orientation: "horizontal" | "vertical") => set({ orientation }),
+  initializeLayout: (layout: "horizontal" | "vertical" | "3x4" | "4x3") => set({ layout }),
 }))

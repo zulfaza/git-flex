@@ -8,7 +8,7 @@ export interface CustomThemeColors {
   legendColors: string[];
 }
 
-export type Orientation = "horizontal" | "vertical";
+export type Layout = "horizontal" | "vertical" | "3x4" | "4x3";
 
 export type DateRangeOption = 'year-ago' | '2021' | '2022' | '2023' | '2024' | '2025';
 

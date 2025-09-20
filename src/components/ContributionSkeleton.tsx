@@ -2,11 +2,10 @@ import { useMemo } from "react";
 
 import ContributionCalendar from "@/components/ContributionCalendar";
 import type { ContributionGridCell } from "@/lib/githubApi";
-
-type Orientation = "horizontal" | "vertical";
+import type { Layout } from "@/types/calendar";
 
 interface ContributionSkeletonProps {
-  orientation: Orientation;
+  layout: Layout;
   padding: number;
   borderRadius: number;
   gridData: (ContributionGridCell | null)[][];
@@ -47,7 +46,7 @@ const buildSkeletonGrid = (
 };
 
 export default function ContributionSkeleton({
-  orientation,
+  layout,
   padding,
   borderRadius,
   gridData,
@@ -63,7 +62,7 @@ export default function ContributionSkeleton({
 
   return (
     <ContributionCalendar
-      orientation={orientation}
+      layout={layout}
       customColors={skeletonTheme}
       padding={padding}
       borderRadius={borderRadius}
