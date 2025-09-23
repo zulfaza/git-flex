@@ -116,7 +116,7 @@ export default function ColorPicker({
   const svBackground = `linear-gradient(to top, black, transparent), linear-gradient(to right, white, hsl(${hsva.h},100%,50%))`;
 
   return (
-    <div className={`text-xs select-none ${className}`}>
+    <div className={`text-xs select-non z-[999999] ${className}`}>
       <div className="flex flex-col gap-4">
         {/* Saturation / Brightness Square */}
         <div
@@ -145,9 +145,9 @@ export default function ColorPicker({
             value={Math.round(hsva.h)}
             onChange={handleHueChange}
             className="flex-1 h-4 appearance-none bg-transparent cursor-pointer border-2 border-black shadow-md"
-            style={{ 
+            style={{
               background: hueGradient,
-              borderRadius: '0'
+              borderRadius: "0",
             }}
           />
           <span className="w-10 text-center font-head text-sm">Hue</span>

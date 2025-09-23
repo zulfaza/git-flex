@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useRef } from "react";
-import ColorPicker from "@/components/ColorPicker";
 import ContributionCalendar from "@/components/ContributionCalendar";
 import ContributionSkeleton from "@/components/ContributionSkeleton";
 import { Button } from "@/components/retroui/Button";
@@ -19,6 +18,11 @@ import type {
 import { Slider } from "./retroui/Slider";
 import { Select } from "./retroui/Select";
 import { Card } from "./retroui/Card";
+import { Popover } from "./retroui/Popover";
+import Sketch from "@uiw/react-color-sketch";
+import { Text } from "./retroui/Text";
+import { Switch } from "./retroui/Switch";
+import { Input } from "./retroui/Input";
 
 const AccordionContent = Accordion.Content;
 const AccordionItem = Accordion.Item;
@@ -34,15 +38,10 @@ export default function ContributionCalendarWrapper({
   const {
     currentTheme,
     customColors,
-    selectedColorId,
-    openPopover,
-    openerRef,
     handleThemeChange,
     resetColors,
-    resolveSelectedHex,
-    applySelectedHex,
-    setSelectedColorId,
-    setOpenPopover,
+    handleColorChange,
+    handleLegendColorChange,
   } = useColorManagement();
 
   const {
@@ -278,45 +277,32 @@ export default function ContributionCalendarWrapper({
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <div className="flex flex-col gap-3">
-                  <div className="flex justify-end">
+                  <div className="flex justify-between items-center border-b py-3">
+                    <Text as={"h6"} className="">
+                      Base Color
+                    </Text>
                     <Button
                       onClick={resetColors}
                       size="sm"
                       variant="secondary"
-                      className="mr-4"
+                      className=""
                       title="Reset to theme defaults"
                     >
                       Reset
                     </Button>
                   </div>
-                  <div className="space-y-1 pr-1  rounded p-2 bg-gray-750">
-                    {baseColorEntries.map(([colorKey, colorValue]) => {
-                      const id = `base:${colorKey}`;
-                      const selected = selectedColorId === id;
-                      return (
-                        <button
-                          key={colorKey as string}
-                          type="button"
-                          onClick={(e) => {
-                            setSelectedColorId(id);
-                            const rect = (
-                              e.currentTarget as HTMLButtonElement
-                            ).getBoundingClientRect();
-                            openerRef.current = e.currentTarget;
-                            setOpenPopover({
-                              id,
-                              x: rect.right + 8,
-                              y: rect.top + window.scrollY,
-                            });
-                          }}
-                          className={`w-full flex items-center gap-2 px-2 py-1 rounded border text-left text-xs transition-colors ${selected ? "border-blue-500 bg-blue-500/20" : "border-gray-600 hover:border-gray-500 bg-gray-700/40 hover:bg-gray-700/60"}`}
-                          title={`Select ${colorKey} color`}
+                  {baseColorEntries.map(([colorKey, colorValue]) => (
+                    <Popover key={colorKey as string}>
+                      <Popover.Trigger asChild>
+                        <Button
+                          variant={"outline"}
+                          className="flex items-center gap-2 w-full shadow-none hover:shadow-none hover:translate-y-0"
                         >
                           <span
                             className="w-5 h-5 rounded "
                             style={{ background: colorValue }}
                           />
-                          <span className="capitalize flex-1">
+                          <span className="capitalize flex-1 text-left text-sm">
                             {(colorKey as string)
                               .replace(/([A-Z])/g, " $1")
                               .trim()}
@@ -324,76 +310,58 @@ export default function ContributionCalendarWrapper({
                           <span className="font-mono text-[10px]">
                             {colorValue}
                           </span>
-                        </button>
-                      );
-                    })}
-                    <div className="pt-2 mt-2 border-t border-gray-600/70 text-[10px] uppercase tracking-wide text-gray-400">
-                      Legend
-                    </div>
-                    {customColors.legendColors.map((c, i) => {
-                      const id = `legend:${i}`;
-                      const selected = selectedColorId === id;
-                      return (
-                        <button
-                          key={id}
-                          type="button"
-                          onClick={(e) => {
-                            setSelectedColorId(id);
-                            const rect = (
-                              e.currentTarget as HTMLButtonElement
-                            ).getBoundingClientRect();
-                            openerRef.current = e.currentTarget;
-                            setOpenPopover({
-                              id,
-                              x: rect.right + 8,
-                              y: rect.top + window.scrollY,
-                            });
+                        </Button>
+                      </Popover.Trigger>
+                      <Popover.Content
+                        side="right"
+                        className="flex justify-center items-center"
+                      >
+                        <Sketch
+                          color={colorValue}
+                          onChange={(v) => handleColorChange(colorKey, v.hex)}
+                          style={{
+                            ["--sketch-box-shadow" as string]: "none",
                           }}
-                          className={`w-full flex items-center gap-2 px-2 py-1 rounded border text-left text-xs transition-colors ${selected ? "border-blue-500 bg-blue-500/20" : "border-gray-600 hover:border-gray-500 bg-gray-700/40 hover:bg-gray-700/60"}`}
-                          title={`Select legend level ${i}`}
+                          width={"100%" as unknown as number}
+                        />
+                      </Popover.Content>
+                    </Popover>
+                  ))}
+                  <Text as={"h6"} className="py-4 border-b">
+                    Legend
+                  </Text>
+                  {customColors.legendColors.map((c, i) => (
+                    <Popover key={`legend:${i}`}>
+                      <Popover.Trigger asChild>
+                        <Button
+                          variant={"outline"}
+                          className="flex items-center gap-2 w-full shadow-none hover:shadow-none hover:translate-y-0"
                         >
                           <span
                             className="w-5 h-5 rounded "
                             style={{ background: c }}
                           />
-                          <span className="flex-1">Level {i}</span>
+                          <span className="capitalize flex-1 text-left text-sm">
+                            {(c as string).replace(/([A-Z])/g, " $1").trim()}
+                          </span>
                           <span className="font-mono text-[10px]">{c}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {openPopover && openPopover.id === selectedColorId && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setOpenPopover(null)}
-                      />
-                      <div
-                        className="fixed z-50"
-                        style={{ top: openPopover.y, left: openPopover.x }}
-                        role="dialog"
-                        aria-label="Color picker"
+                        </Button>
+                      </Popover.Trigger>
+                      <Popover.Content
+                        side="right"
+                        className="flex justify-center items-center"
                       >
-                        <div className="relative  rounded shadow-lg p-2 w-60">
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="text-[11px] font-mono px-1 py-0.5 rounded bg-gray-700 ">
-                              {selectedColorId}
-                            </span>
-                            <button
-                              className="text-[11px] px-2 py-0.5 rounded bg-gray-700  hover:bg-gray-600"
-                              onClick={() => setOpenPopover(null)}
-                            >
-                              Close
-                            </button>
-                          </div>
-                          <ColorPicker
-                            value={resolveSelectedHex()}
-                            onChange={applySelectedHex}
-                          />
-                        </div>
-                      </div>
-                    </>
-                  )}
+                        <Sketch
+                          color={c}
+                          onChange={(v) => handleLegendColorChange(i, v.hex)}
+                          style={{
+                            ["--sketch-box-shadow" as string]: "none",
+                          }}
+                          width={"100%" as unknown as number}
+                        />
+                      </Popover.Content>
+                    </Popover>
+                  ))}
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -405,41 +373,36 @@ export default function ContributionCalendarWrapper({
               <AccordionContent className="px-4 pb-4">
                 <div className="space-y-4">
                   <div>
-                    <label className="flex items-center text-sm font-medium mb-2 ">
-                      <input
-                        type="checkbox"
-                        checked={showTitle}
-                        onChange={(e) => setShowTitle(e.target.checked)}
-                        className="mr-2"
-                      />
-                      Show Title
-                    </label>
-                    {showTitle && (
-                      <div className="mt-2">
-                        <label className="block text-sm font-medium mb-2 ">
-                          Title Text
-                        </label>
-                        <input
-                          type="text"
-                          value={title}
-                          onChange={(e) => setTitle(e.target.value)}
-                          className="w-full p-2 border-2 border-border bg-input text-foreground focus:border-primary focus:outline-none shadow-md font-sans"
-                          placeholder="Enter title text"
+                    <div className="flex">
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          checked={showTitle}
+                          onCheckedChange={setShowTitle}
+                          id="showTitle"
                         />
+                        <label htmlFor="showTitle">Show Title</label>
                       </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="flex items-center text-sm font-medium mb-2 ">
-                      <input
-                        type="checkbox"
-                        checked={showLegend}
-                        onChange={(e) => setShowLegend(e.target.checked)}
-                        className="mr-2"
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          checked={showLegend}
+                          onCheckedChange={setShowLegend}
+                          id="showLegend"
+                        />
+                        <label htmlFor="showLegend">Show Legend</label>
+                      </div>
+                    </div>
+                    <div className="mt-2">
+                      <label className="block text-sm font-medium mb-2 ">
+                        Title Text
+                      </label>
+                      <Input
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        className="w-full p-2 border-2 border-border bg-input text-foreground focus:border-primary focus:outline-none shadow-md font-sans"
+                        placeholder="Enter title text"
                       />
-                      Show Legend
-                    </label>
+                    </div>
                   </div>
                 </div>
               </AccordionContent>
