@@ -117,17 +117,17 @@ export default function ColorPicker({
 
   return (
     <div className={`text-xs select-none ${className}`}>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-4">
         {/* Saturation / Brightness Square */}
         <div
           ref={satValRef}
           onMouseDown={startSVDrag}
           onTouchStart={startSVDrag}
-          className="relative w-full aspect-square rounded-md cursor-crosshair overflow-hidden border border-gray-600"
+          className="relative w-full aspect-square cursor-crosshair overflow-hidden border-2 border-black shadow-md"
           style={{ backgroundImage: svBackground }}
         >
           <div
-            className="absolute w-3 h-3 rounded-full border border-white shadow -translate-x-1/2 -translate-y-1/2"
+            className="absolute w-3 h-3 border-2 border-black shadow-sm -translate-x-1/2 -translate-y-1/2"
             style={{
               left: `${pointerX}%`,
               top: `${pointerY}%`,
@@ -137,23 +137,26 @@ export default function ColorPicker({
         </div>
 
         {/* Hue Slider */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <input
             type="range"
             min={0}
             max={360}
             value={Math.round(hsva.h)}
             onChange={handleHueChange}
-            className="flex-1 h-3 appearance-none bg-transparent cursor-pointer"
-            style={{ background: hueGradient }}
+            className="flex-1 h-4 appearance-none bg-transparent cursor-pointer border-2 border-black shadow-md"
+            style={{ 
+              background: hueGradient,
+              borderRadius: '0'
+            }}
           />
-          <span className="w-10 text-center">Hue</span>
+          <span className="w-10 text-center font-head text-sm">Hue</span>
         </div>
 
         {/* Inputs */}
         <div className="flex gap-2">
           <div className="flex-1">
-            <label className="block mb-1">Hex</label>
+            <label className="block mb-2 font-head text-sm">Hex</label>
             <div className="flex items-center gap-1">
               <input
                 value={hexInput}
@@ -165,7 +168,7 @@ export default function ColorPicker({
                   )
                 }
                 onBlur={handleHexBlur}
-                className="flex-1 px-2 py-1 rounded border border-gray-600 bg-gray-700 text-white font-mono text-[11px]"
+                className="flex-1 px-3 py-2 border-2 border-black bg-background text-foreground font-mono text-xs shadow-md focus:shadow-xs transition-shadow"
                 maxLength={7}
               />
             </div>

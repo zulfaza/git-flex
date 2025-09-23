@@ -2,7 +2,7 @@
 
 ## Build/Lint/Test Commands
 
-- **Lint**: `npm run lint` (ESLint with Next.js rules)
+- **Lint**: `bun run lint` (ESLint with Next.js rules)
 - **Test**: No test framework configured yet
 
 ## Code Style Guidelines

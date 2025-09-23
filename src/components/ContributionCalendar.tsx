@@ -88,7 +88,7 @@ const ContributionCalendar = ({
     <div className="flex-1">
       <div className="flex justify-center">
         <div
-          className="relative overflow-hidden shadow-2xl text-white"
+          className="relative overflow-hidden text-white"
           style={{
             padding: `${padding}px`,
             borderRadius: `${borderRadius}px`,

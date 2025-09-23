@@ -1,5 +1,8 @@
 "use client"
 
+import { Alert } from "@/components/retroui/Alert"
+import { Button } from "@/components/retroui/Button"
+
 interface ErrorDisplayProps {
   error: string
   onRetry?: () => void
@@ -34,29 +37,26 @@ export default function ErrorDisplay({ error, onRetry }: ErrorDisplayProps) {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[400px] p-8 text-center">
-      <div className="text-6xl mb-4">
+      <div className="text-6xl mb-6">
         {getErrorIcon(error)}
       </div>
       
-      <h3 className="text-xl font-semibold text-red-400 mb-2">
-        Oops! Something went wrong
-      </h3>
-      
-      <p className="text-red-300 mb-4 max-w-md">
-        {error}
-      </p>
-      
-      <p className="text-gray-400 text-sm mb-6 max-w-md">
-        {getErrorSuggestion(error)}
-      </p>
+      <Alert status="error" className="max-w-md mb-6">
+        <Alert.Title className="mb-2">
+          Oops! Something went wrong
+        </Alert.Title>
+        <Alert.Description className="mb-4">
+          {error}
+        </Alert.Description>
+        <p className="text-sm text-muted-foreground">
+          {getErrorSuggestion(error)}
+        </p>
+      </Alert>
       
       {onRetry && (
-        <button
-          onClick={onRetry}
-          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900"
-        >
+        <Button onClick={onRetry} variant="secondary">
           Try Again
-        </button>
+        </Button>
       )}
     </div>
   )

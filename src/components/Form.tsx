@@ -1,6 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/retroui/Button";
+import { Input } from "@/components/retroui/Input";
+import { Label } from "@/components/retroui/Label";
 
 export default function Form() {
   const router = useRouter();
@@ -28,32 +31,26 @@ export default function Form() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="mt-10 mx-auto w-full max-w-2xl rounded-lg border border-slate-700/70 bg-slate-950/60 p-4 font-mono shadow-lg"
+      className="mt-10 mx-auto w-full max-w-2xl border-2 border-black bg-card p-6 shadow-lg font-sans"
     >
-      <label htmlFor="github-url" className="sr-only">
+      <Label htmlFor="github-url" className="sr-only">
         GitHub Profile URL or Username
-      </label>
-      <div className="flex flex-col gap-3 text-sm">
-        <div className="flex w-full flex-1 items-center gap-2 rounded-md border border-slate-700/70 bg-slate-900/70 px-3 py-2 focus-within:border-cyan-500/70">
-          <input
+      </Label>
+      <div className="flex flex-col justify-center items-center gap-4 text-sm">
+        <div className="w-full">
+          <Input
             id="github-url"
             name="github-url"
             type="text"
             autoComplete="off"
             placeholder="https://github.com/your-username or username"
             required
-            className="w-full bg-transparent py-1 text-slate-100 placeholder-slate-500 outline-none"
+            className="w-full"
           />
         </div>
-        <button
-          type="submit"
-          className="relative inline-flex items-center justify-center gap-2 rounded-md border border-cyan-500/40 bg-gradient-to-r from-cyan-600 to-blue-600 px-6 py-3 font-semibold text-white shadow-lg shadow-cyan-700/30 transition hover:from-cyan-500 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 active:scale-[0.98]"
-        >
-          Run
-          <span className="absolute inset-0 -z-10 rounded-md opacity-0 blur transition group-hover:opacity-100" />
-        </button>
+        <Button type="submit">Run</Button>
       </div>
-      <p className="mt-3 text-left text-[11px] text-slate-500">
+      <p className="mt-4 text-left text-xs text-muted-foreground">
         We only fetch public contributions. Nothing is stored. Leave dates empty
         for last year.
       </p>

@@ -4,12 +4,8 @@ import { useMemo, useRef } from "react";
 import ColorPicker from "@/components/ColorPicker";
 import ContributionCalendar from "@/components/ContributionCalendar";
 import ContributionSkeleton from "@/components/ContributionSkeleton";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Button } from "@/components/retroui/Button";
+import { Accordion } from "@/components/retroui/Accordion";
 import { colorConfig } from "@/constants/colors";
 import { getGridData } from "@/lib/gridUtils";
 import { exportCalendar } from "@/lib/exportUtils";
@@ -20,6 +16,13 @@ import type {
   CustomThemeColors,
   DateRangeOption,
 } from "@/types/calendar";
+import { Slider } from "./retroui/Slider";
+import { Select } from "./retroui/Select";
+import { Card } from "./retroui/Card";
+
+const AccordionContent = Accordion.Content;
+const AccordionItem = Accordion.Item;
+const AccordionTrigger = Accordion.Header;
 
 export default function ContributionCalendarWrapper({
   contributions,
@@ -27,7 +30,6 @@ export default function ContributionCalendarWrapper({
   squareSize = 12,
   dateRangeOption = "year-ago",
   onDateRangeChange,
-  showDateRangeSelector = false,
 }: ContributionCalendarWrapperProps) {
   const {
     currentTheme,
@@ -93,6 +95,12 @@ export default function ContributionCalendarWrapper({
   const baseColorEntries = Object.entries(customColors).filter(
     ([k]) => k !== "legendColors",
   ) as [keyof CustomThemeColors, string][];
+  const last5Years = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 5 }, (_, i) =>
+      (now.getFullYear() - i).toString(),
+    );
+  }, []);
 
   return (
     <div className="min-h-screen p-4">
@@ -103,155 +111,167 @@ export default function ContributionCalendarWrapper({
             type="multiple"
             className="space-y-2"
           >
-            <AccordionItem
-              value="appearance"
-              className="border border-gray-600"
-            >
-              <AccordionTrigger className="px-4 text-white hover:no-underline">
+            <AccordionItem value="appearance">
+              <AccordionTrigger className="px-4 text-foreground hover:no-underline font-head">
                 Appearance
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-white">
+                    <label className="block text-sm font-medium mb-2 ">
                       Theme
                     </label>
-                    <select
+                    <Select
                       value={currentTheme}
-                      onChange={(e) =>
-                        handleThemeChange(
-                          e.target.value as keyof typeof colorConfig.themes,
-                        )
+                      onValueChange={(v) =>
+                        handleThemeChange(v as keyof typeof colorConfig.themes)
                       }
-                      className="w-full p-2 rounded border border-gray-600 bg-gray-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     >
-                      {Object.keys(colorConfig.themes).map((themeKey) => (
-                        <option key={themeKey} value={themeKey}>
-                          {themeKey.charAt(0).toUpperCase() +
-                            themeKey.slice(1).replace("-", " ")}
-                        </option>
-                      ))}
-                    </select>
+                      <Select.Trigger className="w-full">
+                        <Select.Value placeholder="Pick your date range" />
+                      </Select.Trigger>
+                      <Select.Content>
+                        <Select.Group>
+                          <Select.Item value="year-ago">
+                            Past 365 Days
+                          </Select.Item>
+                          {Object.keys(colorConfig.themes).map((themeKey) => (
+                            <Select.Item key={themeKey} value={themeKey}>
+                              {themeKey.charAt(0).toUpperCase() +
+                                themeKey.slice(1).replace("-", " ")}
+                            </Select.Item>
+                          ))}
+                        </Select.Group>
+                      </Select.Content>
+                    </Select>
                   </div>
 
-                  {showDateRangeSelector && onDateRangeChange && (
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-white">
-                        Time Period
-                      </label>
-                      <select
-                        value={dateRangeOption}
-                        onChange={(e) =>
-                          onDateRangeChange(e.target.value as DateRangeOption)
-                        }
-                        className="w-full p-2 rounded border border-gray-600 bg-gray-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                      >
-                        <option value="year-ago">Past 365 Days</option>
-                        <option value="2025">2025</option>
-                        <option value="2024">2024</option>
-                        <option value="2023">2023</option>
-                        <option value="2022">2022</option>
-                        <option value="2021">2021</option>
-                      </select>
-                    </div>
-                  )}
+                  <div>
+                    <label className="block text-sm font-medium mb-2 ">
+                      Time Period
+                    </label>
+                    <Select
+                      value={dateRangeOption}
+                      onValueChange={(v) =>
+                        onDateRangeChange
+                          ? onDateRangeChange(v as DateRangeOption)
+                          : null
+                      }
+                    >
+                      <Select.Trigger className="w-full">
+                        <Select.Value placeholder="Pick your date range" />
+                      </Select.Trigger>
+                      <Select.Content>
+                        <Select.Group>
+                          <Select.Item value="year-ago">
+                            Past 365 Days
+                          </Select.Item>
+                          {last5Years.map((year) => (
+                            <Select.Item key={year} value={year}>
+                              {year}
+                            </Select.Item>
+                          ))}
+                        </Select.Group>
+                      </Select.Content>
+                    </Select>
+                  </div>
                 </div>
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="layout" className="border border-gray-600">
-              <AccordionTrigger className="px-4 text-white hover:no-underline">
+            <AccordionItem value="layout">
+              <AccordionTrigger className="px-4 text-foreground hover:no-underline font-head">
                 Layout & Spacing
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-white">
+                    <label className="block text-sm font-medium mb-2 ">
                       Layout
                     </label>
-                    <select
+                    <Select
                       value={layout}
-                      onChange={(e) =>
+                      onValueChange={(v) =>
                         setLayout(
-                          e.target.value as
-                            | "horizontal"
-                            | "vertical"
-                            | "3x4"
-                            | "4x3",
+                          v as "horizontal" | "vertical" | "3x4" | "4x3",
                         )
                       }
-                      className="w-full p-2 rounded border border-gray-600 bg-gray-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     >
-                      <option value="horizontal">Horizontal</option>
-                      <option value="vertical">Vertical</option>
-                    </select>
+                      <Select.Trigger className="w-full">
+                        <Select.Value placeholder="Pick your layout" />
+                      </Select.Trigger>
+                      <Select.Content>
+                        <Select.Group>
+                          <Select.Item value="horizontal">
+                            Horizontal
+                          </Select.Item>
+                          <Select.Item value="vertical">Vertical</Select.Item>
+                        </Select.Group>
+                      </Select.Content>
+                    </Select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-white">
+                    <label className="block text-sm font-medium mb-2 ">
                       Padding: {padding}px
                     </label>
-                    <input
-                      type="range"
-                      min="16"
-                      max="64"
-                      value={padding}
-                      onChange={(e) => setPadding(Number(e.target.value))}
-                      className="w-full"
+                    <Slider
+                      value={[padding]}
+                      onValueChange={(value) => setPadding(value[0])}
+                      min={16}
+                      max={64}
+                      step={1}
+                      aria-label="Slider Control padding"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-white">
+                    <label className="block text-sm font-medium mb-2 ">
                       Border Radius: {borderRadius}px
                     </label>
-                    <input
-                      type="range"
-                      min="0"
-                      max="32"
-                      value={borderRadius}
-                      onChange={(e) => setBorderRadius(Number(e.target.value))}
-                      className="w-full"
+                    <Slider
+                      value={[borderRadius]}
+                      onValueChange={(value) => setBorderRadius(value[0])}
+                      min={0}
+                      max={32}
+                      step={1}
+                      aria-label="Slider Control border radius"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-white">
+                    <label className="block text-sm font-medium mb-2 ">
                       Horizontal Padding: {wrapperPaddingX}px
                     </label>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={wrapperPaddingX}
-                      onChange={(e) =>
-                        setWrapperPaddingX(Number(e.target.value))
-                      }
-                      className="w-full"
+                    <Slider
+                      value={[wrapperPaddingX]}
+                      onValueChange={(value) => setWrapperPaddingX(value[0])}
+                      min={0}
+                      max={100}
+                      step={1}
+                      aria-label="Slider Control horizontal padding"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-white">
+                    <label className="block text-sm font-medium mb-2 ">
                       Vertical Padding: {wrapperPaddingY}px
                     </label>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={wrapperPaddingY}
-                      onChange={(e) =>
-                        setWrapperPaddingY(Number(e.target.value))
-                      }
-                      className="w-full"
+                    <Slider
+                      value={[wrapperPaddingY]}
+                      onValueChange={(value) => setWrapperPaddingY(value[0])}
+                      min={0}
+                      max={100}
+                      step={1}
+                      aria-label="Slider Control vertical padding"
                     />
                   </div>
                 </div>
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="colors" className="border border-gray-600">
-              <AccordionTrigger className="px-4 text-white hover:no-underline">
+            <AccordionItem value="colors">
+              <AccordionTrigger className="px-4  hover:no-underline">
                 <div className="flex items-center justify-between w-full">
                   <span>Custom Colors</span>
                 </div>
@@ -259,15 +279,17 @@ export default function ContributionCalendarWrapper({
               <AccordionContent className="px-4 pb-4">
                 <div className="flex flex-col gap-3">
                   <div className="flex justify-end">
-                    <button
+                    <Button
                       onClick={resetColors}
-                      className="px-2 py-1 text-xs rounded bg-gray-600 text-white hover:bg-gray-500 transition-colors mr-4"
+                      size="sm"
+                      variant="secondary"
+                      className="mr-4"
                       title="Reset to theme defaults"
                     >
                       Reset
-                    </button>
+                    </Button>
                   </div>
-                  <div className="space-y-1 pr-1 border border-gray-600 rounded p-2 bg-gray-750">
+                  <div className="space-y-1 pr-1  rounded p-2 bg-gray-750">
                     {baseColorEntries.map(([colorKey, colorValue]) => {
                       const id = `base:${colorKey}`;
                       const selected = selectedColorId === id;
@@ -291,7 +313,7 @@ export default function ContributionCalendarWrapper({
                           title={`Select ${colorKey} color`}
                         >
                           <span
-                            className="w-5 h-5 rounded border border-gray-600"
+                            className="w-5 h-5 rounded "
                             style={{ background: colorValue }}
                           />
                           <span className="capitalize flex-1">
@@ -331,7 +353,7 @@ export default function ContributionCalendarWrapper({
                           title={`Select legend level ${i}`}
                         >
                           <span
-                            className="w-5 h-5 rounded border border-gray-600"
+                            className="w-5 h-5 rounded "
                             style={{ background: c }}
                           />
                           <span className="flex-1">Level {i}</span>
@@ -352,13 +374,13 @@ export default function ContributionCalendarWrapper({
                         role="dialog"
                         aria-label="Color picker"
                       >
-                        <div className="relative bg-gray-800 border border-gray-600 rounded shadow-lg p-2 w-60">
+                        <div className="relative  rounded shadow-lg p-2 w-60">
                           <div className="flex justify-between items-center mb-1">
-                            <span className="text-[11px] font-mono px-1 py-0.5 rounded bg-gray-700 border border-gray-600">
+                            <span className="text-[11px] font-mono px-1 py-0.5 rounded bg-gray-700 ">
                               {selectedColorId}
                             </span>
                             <button
-                              className="text-[11px] px-2 py-0.5 rounded bg-gray-700 border border-gray-600 hover:bg-gray-600"
+                              className="text-[11px] px-2 py-0.5 rounded bg-gray-700  hover:bg-gray-600"
                               onClick={() => setOpenPopover(null)}
                             >
                               Close
@@ -376,14 +398,14 @@ export default function ContributionCalendarWrapper({
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="display" className="border border-gray-600">
-              <AccordionTrigger className="px-4 text-white hover:no-underline">
+            <AccordionItem value="display">
+              <AccordionTrigger className="px-4  hover:no-underline">
                 Display Options
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <div className="space-y-4">
                   <div>
-                    <label className="flex items-center text-sm font-medium mb-2 text-white">
+                    <label className="flex items-center text-sm font-medium mb-2 ">
                       <input
                         type="checkbox"
                         checked={showTitle}
@@ -394,14 +416,14 @@ export default function ContributionCalendarWrapper({
                     </label>
                     {showTitle && (
                       <div className="mt-2">
-                        <label className="block text-sm font-medium mb-2 text-white">
+                        <label className="block text-sm font-medium mb-2 ">
                           Title Text
                         </label>
                         <input
                           type="text"
                           value={title}
                           onChange={(e) => setTitle(e.target.value)}
-                          className="w-full p-2 rounded border border-gray-600 bg-gray-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                          className="w-full p-2 border-2 border-border bg-input text-foreground focus:border-primary focus:outline-none shadow-md font-sans"
                           placeholder="Enter title text"
                         />
                       </div>
@@ -409,7 +431,7 @@ export default function ContributionCalendarWrapper({
                   </div>
 
                   <div>
-                    <label className="flex items-center text-sm font-medium mb-2 text-white">
+                    <label className="flex items-center text-sm font-medium mb-2 ">
                       <input
                         type="checkbox"
                         checked={showLegend}
@@ -423,64 +445,67 @@ export default function ContributionCalendarWrapper({
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="export" className="border border-gray-600">
-              <AccordionTrigger className="px-4 text-white hover:no-underline">
+            <AccordionItem value="export">
+              <AccordionTrigger className="px-4  hover:no-underline">
                 Export
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
-                <button
+                <Button
                   onClick={handleExportCalendar}
                   data-export-btn
-                  className="w-full px-3 py-2 rounded text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                  className="w-full"
+                  size="md"
                 >
                   Export {exportFormat.toUpperCase()}
-                </button>
+                </Button>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
         </div>
 
-        <div className="border border-gray-600 overflow-x-auto h-full p-2">
-          <div
-            id="contribution-wrapper"
-            ref={calendarRef}
-            style={{
-              backgroundColor: customColors.wrapperBackground,
-              paddingLeft: `${wrapperPaddingX}px`,
-              paddingRight: `${wrapperPaddingX}px`,
-              paddingTop: `${wrapperPaddingY}px`,
-              paddingBottom: `${wrapperPaddingY}px`,
-              width: "max-content",
-              minWidth: `${(layout === "horizontal" ? 800 : layout === "vertical" ? 320 : 600) + (wrapperPaddingX * 2)}px`,
-            }}
-            className="flex justify-center items-center "
-          >
-            {isLoading ? (
-              <ContributionSkeleton
-                layout={layout}
-                padding={padding}
-                borderRadius={borderRadius}
-                gridData={gridData}
-                gridCols={gridCols}
-                showTitle={showTitle}
-                showLegend={showLegend}
-                title={title}
-              />
-            ) : (
-              <ContributionCalendar
-                layout={layout}
-                customColors={customColors}
-                padding={padding}
-                borderRadius={borderRadius}
-                gridData={gridData}
-                gridCols={gridCols}
-                title={title}
-                showTitle={showTitle}
-                showLegend={showLegend}
-              />
-            )}
-          </div>
-        </div>
+        <Card className="overflow-x-auto h-full p-2 shadow-none hover:shadow-none">
+          <Card.Content>
+            <div
+              id="contribution-wrapper"
+              ref={calendarRef}
+              style={{
+                backgroundColor: customColors.wrapperBackground,
+                paddingLeft: `${wrapperPaddingX}px`,
+                paddingRight: `${wrapperPaddingX}px`,
+                paddingTop: `${wrapperPaddingY}px`,
+                paddingBottom: `${wrapperPaddingY}px`,
+                width: "max-content",
+                minWidth: `${(layout === "horizontal" ? 800 : layout === "vertical" ? 320 : 600) + wrapperPaddingX * 2}px`,
+              }}
+              className="flex justify-center items-center "
+            >
+              {isLoading ? (
+                <ContributionSkeleton
+                  layout={layout}
+                  padding={padding}
+                  borderRadius={borderRadius}
+                  gridData={gridData}
+                  gridCols={gridCols}
+                  showTitle={showTitle}
+                  showLegend={showLegend}
+                  title={title}
+                />
+              ) : (
+                <ContributionCalendar
+                  layout={layout}
+                  customColors={customColors}
+                  padding={padding}
+                  borderRadius={borderRadius}
+                  gridData={gridData}
+                  gridCols={gridCols}
+                  title={title}
+                  showTitle={showTitle}
+                  showLegend={showLegend}
+                />
+              )}
+            </div>
+          </Card.Content>
+        </Card>
       </div>
     </div>
   );

@@ -57,18 +57,18 @@ export default function UserPageClient({ username }: UserPageClientProps) {
   const contributions = data?.success ? data.data : defaultContributions;
 
   return (
-    <div className="bg-gray-900">
-      <div className="max-w-[1440px] mx-auto p-4">
-        <div className="mb-6 px-4">
-          <h1 className="text-2xl font-bold text-white mb-2">
+    <div className="bg-background min-h-screen">
+      <div className="max-w-[1440px] mx-auto p-6">
+        <div className="mb-8 px-4">
+          <h1 className="text-3xl font-head font-bold text-foreground mb-3 border-b-4 border-primary pb-2 inline-block">
             {username}&apos;s GitHub Contributions
           </h1>
 
-          <p className="text-gray-400">
+          <p className="text-muted-foreground font-sans mt-4">
             {isLoading ? (
-              <span className="animate-pulse">Loading contributions...</span>
+              <span className="animate-pulse bg-muted px-3 py-1 border-2 border-border shadow-sm">Loading contributions...</span>
             ) : error || !data?.success ? (
-              <span className="text-red-400">
+              <span className="text-destructive-foreground bg-destructive px-3 py-2 border-2 border-black shadow-md">
                 {data?.error ||
                   error?.message ||
                   "Failed to fetch contributions"}
