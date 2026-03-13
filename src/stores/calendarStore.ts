@@ -1,8 +1,10 @@
 import { create } from 'zustand'
+import type { ExportFormat, ExportScale, Layout } from '@/types/calendar'
 
 interface CalendarState {
-  exportFormat: "png" | "svg"
-  layout: "horizontal" | "vertical" | "3x4" | "4x3"
+  exportFormat: ExportFormat
+  exportScale: ExportScale
+  layout: Layout
   padding: number
   borderRadius: number
   wrapperPaddingX: number
@@ -10,8 +12,9 @@ interface CalendarState {
   title: string
   showTitle: boolean
   showLegend: boolean
-  setExportFormat: (format: "png" | "svg") => void
-  setLayout: (layout: "horizontal" | "vertical" | "3x4" | "4x3") => void
+  setExportFormat: (format: ExportFormat) => void
+  setExportScale: (scale: ExportScale) => void
+  setLayout: (layout: Layout) => void
   setPadding: (padding: number) => void
   setBorderRadius: (borderRadius: number) => void
   setWrapperPaddingX: (paddingX: number) => void
@@ -20,12 +23,27 @@ interface CalendarState {
   setShowTitle: (show: boolean) => void
   setShowLegend: (show: boolean) => void
   resetCalendarSettings: () => void
-  initializeLayout: (layout: "horizontal" | "vertical" | "3x4" | "4x3") => void
+  initializeLayout: (layout: Layout) => void
 }
 
-const initialState = {
-  exportFormat: "png" as const,
-  layout: "horizontal" as const,
+type CalendarStateDefaults = Pick<
+  CalendarState,
+  | 'exportFormat'
+  | 'exportScale'
+  | 'layout'
+  | 'padding'
+  | 'borderRadius'
+  | 'wrapperPaddingX'
+  | 'wrapperPaddingY'
+  | 'title'
+  | 'showTitle'
+  | 'showLegend'
+>
+
+const initialState: CalendarStateDefaults = {
+  exportFormat: 'png',
+  exportScale: 2,
+  layout: 'horizontal',
   padding: 16,
   borderRadius: 0,
   wrapperPaddingX: 0,
@@ -38,6 +56,7 @@ const initialState = {
 export const useCalendarStore = create<CalendarState>((set) => ({
   ...initialState,
   setExportFormat: (exportFormat) => set({ exportFormat }),
+  setExportScale: (exportScale) => set({ exportScale }),
   setLayout: (layout) => set({ layout }),
   setPadding: (padding) => set({ padding }),
   setBorderRadius: (borderRadius) => set({ borderRadius }),
@@ -47,5 +66,5 @@ export const useCalendarStore = create<CalendarState>((set) => ({
   setShowTitle: (showTitle) => set({ showTitle }),
   setShowLegend: (showLegend) => set({ showLegend }),
   resetCalendarSettings: () => set(initialState),
-  initializeLayout: (layout: "horizontal" | "vertical" | "3x4" | "4x3") => set({ layout }),
+  initializeLayout: (layout) => set({ layout }),
 }))

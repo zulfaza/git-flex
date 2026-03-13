@@ -1,12 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import ContributionCalendarWrapper from "@/components/ContributionCalendarWrapper";
 import { useGitHubContributions } from "@/hooks/useGitHubContributions";
 import { getDateRangeFromToday } from "@/constants/months";
 import type { UserPageClientProps, DateRangeOption } from "@/types/calendar";
-import Link from "next/link";
 
 export default function UserPageClient({ username }: UserPageClientProps) {
   const searchParams = useSearchParams();
@@ -57,44 +57,61 @@ export default function UserPageClient({ username }: UserPageClientProps) {
   );
 
   const contributions = data?.success ? data.data : defaultContributions;
+  const statusContent = (() => {
+    if (isLoading) {
+      return (
+        <span className="inline-flex max-w-full animate-pulse border-2 border-border bg-muted px-3 py-1 shadow-sm">
+          Loading contributions...
+        </span>
+      );
+    }
+
+    if (error || !data?.success) {
+      return (
+        <span className="inline-flex max-w-full border-2 border-black bg-destructive px-3 py-2 text-destructive-foreground shadow-md">
+          {data?.error || error?.message || "Failed to fetch contributions"}
+        </span>
+      );
+    }
+
+    if (from && to) {
+      return `Contribution calendar from ${new Date(from).toLocaleDateString()} to ${new Date(to).toLocaleDateString()}`;
+    }
+
+    if (from) {
+      return `Contributions from ${new Date(from).toLocaleDateString()}`;
+    }
+
+    if (to) {
+      return `Contributions up to ${new Date(to).toLocaleDateString()}`;
+    }
+
+    if (dateRangeOption === "year-ago") {
+      return "Contribution calendar for the past 365 days";
+    }
+
+    return `Contribution calendar for ${dateRangeOption}`;
+  })();
 
   return (
     <div className="bg-background min-h-screen">
-      <div className="max-w-[1440px] mx-auto p-6">
-        <div className="mb-8 px-4">
-          <h1 className="text-3xl font-head font-bold text-foreground mb-3 border-b-4 border-primary pb-2 inline-block">
-            {username}&apos;s GitHub Contributions
-          </h1>
-          <div className="flex justify-start items-center mt-4 gap-2">
+      <div className="mx-auto flex max-w-[1800px] flex-col gap-6 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
+        <div className="grid gap-4 border-2 border-border bg-card px-4 py-4 shadow-md sm:px-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start lg:gap-6">
+          <div className="min-w-0">
+            <h1 className="inline-block border-b-4 border-primary pb-2 text-3xl font-head font-bold text-foreground sm:text-4xl">
+              {username}&apos;s GitHub Contributions
+            </h1>
+            <p className="mt-3 max-w-4xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+              {statusContent}
+            </p>
+          </div>
+          <div className="flex lg:justify-end">
             <Link
-              className="border-2 py-1 px-2 shadow-md hover:shadow-none transition-all hover:translate-y-0.5"
+              className="inline-flex items-center border-2 border-border bg-background px-3 py-2 font-head text-sm shadow-md transition-colors hover:bg-muted focus:outline-hidden focus:ring-2 focus:ring-ring"
               href={"/"}
             >
               Back
             </Link>
-            <p className="text-muted-foreground font-sans">
-              {isLoading ? (
-                <span className="animate-pulse bg-muted px-3 py-1 border-2 border-border shadow-sm">
-                  Loading contributions...
-                </span>
-              ) : error || !data?.success ? (
-                <span className="text-destructive-foreground bg-destructive px-3 py-2 border-2 border-black shadow-md">
-                  {data?.error ||
-                    error?.message ||
-                    "Failed to fetch contributions"}
-                </span>
-              ) : from && to ? (
-                `Contribution calendar from ${new Date(from).toLocaleDateString()} to ${new Date(to).toLocaleDateString()}`
-              ) : from ? (
-                `Contributions from ${new Date(from).toLocaleDateString()}`
-              ) : to ? (
-                `Contributions up to ${new Date(to).toLocaleDateString()}`
-              ) : dateRangeOption === "year-ago" ? (
-                "Contribution calendar for the past 365 days"
-              ) : (
-                `Contribution calendar for ${dateRangeOption}`
-              )}
-            </p>
           </div>
         </div>
         <ContributionCalendarWrapper

@@ -85,7 +85,7 @@ const ContributionCalendar = ({
   const sideLabels = WEEKDAYS_SHORT_STRING;
 
   return (
-    <div className="flex-1">
+    <div className="inline-flex flex-col">
       <div className="flex justify-center">
         <div
           className="relative overflow-hidden text-white"
@@ -460,7 +460,7 @@ const ContributionCalendar = ({
             </table>
           </div>
 
-          <div className="flex justify-between items-center px-4 mt-6">
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 px-4">
             {/* Footer */}
             <div className="text-center text-xs opacity-40 font-mono">
               Generated with GitFlex

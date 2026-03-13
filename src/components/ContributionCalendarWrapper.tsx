@@ -14,6 +14,8 @@ import type {
   ContributionCalendarWrapperProps,
   CustomThemeColors,
   DateRangeOption,
+  ExportFormat,
+  ExportScale,
 } from "@/types/calendar";
 import { Slider } from "./retroui/Slider";
 import { Select } from "./retroui/Select";
@@ -27,6 +29,24 @@ import { Input } from "./retroui/Input";
 const AccordionContent = Accordion.Content;
 const AccordionItem = Accordion.Item;
 const AccordionTrigger = Accordion.Header;
+
+const parseExportFormat = (value: string): ExportFormat =>
+  value === "svg" ? "svg" : "png";
+
+const parseExportScale = (value: string): ExportScale => {
+  switch (value) {
+    case "1":
+      return 1;
+    case "2":
+      return 2;
+    case "3":
+      return 3;
+    case "4":
+      return 4;
+    default:
+      return 2;
+  }
+};
 
 export default function ContributionCalendarWrapper({
   contributions,
@@ -46,6 +66,7 @@ export default function ContributionCalendarWrapper({
 
   const {
     exportFormat,
+    exportScale,
     layout,
     padding,
     borderRadius,
@@ -54,6 +75,8 @@ export default function ContributionCalendarWrapper({
     title,
     showTitle,
     showLegend,
+    setExportFormat,
+    setExportScale,
     setLayout,
     setPadding,
     setBorderRadius,
@@ -70,6 +93,7 @@ export default function ContributionCalendarWrapper({
     exportCalendar({
       calendarRef,
       exportFormat,
+      exportScale,
       layout,
       squareSize,
       gridData,
@@ -102,13 +126,13 @@ export default function ContributionCalendarWrapper({
   }, []);
 
   return (
-    <div className="min-h-screen p-4">
-      <div className="flex flex-col lg:flex-row gap-6 min-h-[500px]">
-        <div className="h-full w-full lg:w-80 flex-shrink-0">
+    <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start lg:gap-6">
+      <div className="order-2 w-full lg:order-1 lg:w-[280px]">
+        <div className="space-y-1.5">
           <Accordion
             defaultValue={["appearance"]}
             type="multiple"
-            className="space-y-2"
+            className="space-y-1.5"
           >
             <AccordionItem value="appearance">
               <AccordionTrigger className="px-4 text-foreground hover:no-underline font-head">
@@ -117,7 +141,10 @@ export default function ContributionCalendarWrapper({
               <AccordionContent className="px-4 pb-4">
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2 ">
+                    <label
+                      htmlFor="theme-select"
+                      className="block text-sm font-medium mb-2 "
+                    >
                       Theme
                     </label>
                     <Select
@@ -126,7 +153,7 @@ export default function ContributionCalendarWrapper({
                         handleThemeChange(v as keyof typeof colorConfig.themes)
                       }
                     >
-                      <Select.Trigger className="w-full">
+                      <Select.Trigger id="theme-select" className="w-full">
                         <Select.Value placeholder="Pick your date range" />
                       </Select.Trigger>
                       <Select.Content>
@@ -146,7 +173,10 @@ export default function ContributionCalendarWrapper({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2 ">
+                    <label
+                      htmlFor="time-period-select"
+                      className="block text-sm font-medium mb-2 "
+                    >
                       Time Period
                     </label>
                     <Select
@@ -157,7 +187,7 @@ export default function ContributionCalendarWrapper({
                           : null
                       }
                     >
-                      <Select.Trigger className="w-full">
+                      <Select.Trigger id="time-period-select" className="w-full">
                         <Select.Value placeholder="Pick your date range" />
                       </Select.Trigger>
                       <Select.Content>
@@ -185,7 +215,10 @@ export default function ContributionCalendarWrapper({
               <AccordionContent className="px-4 pb-4">
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2 ">
+                    <label
+                      htmlFor="layout-select"
+                      className="block text-sm font-medium mb-2 "
+                    >
                       Layout
                     </label>
                     <Select
@@ -196,7 +229,7 @@ export default function ContributionCalendarWrapper({
                         )
                       }
                     >
-                      <Select.Trigger className="w-full">
+                      <Select.Trigger id="layout-select" className="w-full">
                         <Select.Value placeholder="Pick your layout" />
                       </Select.Trigger>
                       <Select.Content>
@@ -392,10 +425,14 @@ export default function ContributionCalendarWrapper({
                       </div>
                     </div>
                     <div className="mt-2">
-                      <label className="block text-sm font-medium mb-2 ">
-                        Title Text
-                      </label>
+                    <label
+                      htmlFor="title-input"
+                      className="block text-sm font-medium mb-2 "
+                    >
+                      Title Text
+                    </label>
                       <Input
+                        id="title-input"
                         type="text"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
@@ -413,63 +450,135 @@ export default function ContributionCalendarWrapper({
                 Export
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
-                <Button
-                  onClick={handleExportCalendar}
-                  data-export-btn
-                  className="w-full"
-                  size="md"
-                >
-                  Export {exportFormat.toUpperCase()}
-                </Button>
+                <div className="space-y-4">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <label
+                        htmlFor="export-format-select"
+                        className="block text-sm font-medium mb-2 "
+                      >
+                        Format
+                      </label>
+                      <Select
+                        value={exportFormat}
+                        onValueChange={(value) =>
+                          setExportFormat(parseExportFormat(value))
+                        }
+                      >
+                        <Select.Trigger
+                          id="export-format-select"
+                          className="w-full min-w-0"
+                        >
+                          <Select.Value placeholder="Pick export format" />
+                        </Select.Trigger>
+                        <Select.Content>
+                          <Select.Group>
+                            <Select.Item value="png">PNG</Select.Item>
+                            <Select.Item value="svg">SVG</Select.Item>
+                          </Select.Group>
+                        </Select.Content>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="export-scale-select"
+                        className="block text-sm font-medium mb-2 "
+                      >
+                        Scale
+                      </label>
+                      <Select
+                        value={exportScale.toString()}
+                        onValueChange={(value) =>
+                          setExportScale(parseExportScale(value))
+                        }
+                        disabled={exportFormat === "svg"}
+                      >
+                        <Select.Trigger
+                          id="export-scale-select"
+                          className="w-full min-w-0"
+                        >
+                          <Select.Value placeholder="Pick export scale" />
+                        </Select.Trigger>
+                        <Select.Content>
+                          <Select.Group>
+                            <Select.Item value="1">1x</Select.Item>
+                            <Select.Item value="2">2x</Select.Item>
+                            <Select.Item value="3">3x</Select.Item>
+                            <Select.Item value="4">4x</Select.Item>
+                          </Select.Group>
+                        </Select.Content>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {exportFormat === "svg" ? (
+                    <p className="text-xs text-muted-foreground">
+                      SVG stays vector. Scale applies to PNG only.
+                    </p>
+                  ) : null}
+
+                  <Button
+                    onClick={handleExportCalendar}
+                    data-export-btn
+                    className="w-full"
+                    size="md"
+                  >
+                    Export {exportFormat.toUpperCase()}
+                  </Button>
+                </div>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
         </div>
-
-        <Card className="overflow-x-auto h-full p-2 shadow-none hover:shadow-none">
-          <Card.Content>
-            <div
-              id="contribution-wrapper"
-              ref={calendarRef}
-              style={{
-                backgroundColor: customColors.wrapperBackground,
-                paddingLeft: `${wrapperPaddingX}px`,
-                paddingRight: `${wrapperPaddingX}px`,
-                paddingTop: `${wrapperPaddingY}px`,
-                paddingBottom: `${wrapperPaddingY}px`,
-                width: "max-content",
-                minWidth: `${(layout === "horizontal" ? 800 : layout === "vertical" ? 320 : 600) + wrapperPaddingX * 2}px`,
-              }}
-              className="flex justify-center items-center "
-            >
-              {isLoading ? (
-                <ContributionSkeleton
-                  layout={layout}
-                  padding={padding}
-                  borderRadius={borderRadius}
-                  gridData={gridData}
-                  gridCols={gridCols}
-                  showTitle={showTitle}
-                  showLegend={showLegend}
-                  title={title}
-                />
-              ) : (
-                <ContributionCalendar
-                  layout={layout}
-                  customColors={customColors}
-                  padding={padding}
-                  borderRadius={borderRadius}
-                  gridData={gridData}
-                  gridCols={gridCols}
-                  title={title}
-                  showTitle={showTitle}
-                  showLegend={showLegend}
-                />
-              )}
-            </div>
-          </Card.Content>
-        </Card>
       </div>
+
+      <Card className="order-1 block min-w-0 w-full p-2 shadow-none hover:shadow-none lg:order-2">
+        <Card.Content className="min-w-0 p-2 sm:p-3">
+          <div className="w-full overflow-x-auto overscroll-x-contain pb-2">
+            <div className="flex min-w-full justify-center">
+              <div
+                id="contribution-wrapper"
+                ref={calendarRef}
+                style={{
+                  backgroundColor: customColors.wrapperBackground,
+                  borderRadius: `${borderRadius}px`,
+                  paddingLeft: `${wrapperPaddingX}px`,
+                  paddingRight: `${wrapperPaddingX}px`,
+                  paddingTop: `${wrapperPaddingY}px`,
+                  paddingBottom: `${wrapperPaddingY}px`,
+                }}
+                className="flex w-max shrink-0 items-center justify-center overflow-hidden"
+              >
+                {isLoading ? (
+                  <ContributionSkeleton
+                    layout={layout}
+                    padding={padding}
+                    borderRadius={borderRadius}
+                    gridData={gridData}
+                    gridCols={gridCols}
+                    showTitle={showTitle}
+                    showLegend={showLegend}
+                    title={title}
+                  />
+                ) : (
+                  <ContributionCalendar
+                    layout={layout}
+                    customColors={customColors}
+                    padding={padding}
+                    borderRadius={borderRadius}
+                    gridData={gridData}
+                    gridCols={gridCols}
+                    title={title}
+                    showTitle={showTitle}
+                    showLegend={showLegend}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        </Card.Content>
+      </Card>
     </div>
   );
 }

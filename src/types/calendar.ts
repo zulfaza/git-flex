@@ -8,6 +8,8 @@ export interface CustomThemeColors {
   legendColors: string[];
 }
 
+export type ExportFormat = 'png' | 'svg'
+export type ExportScale = 1 | 2 | 3 | 4
 export type Layout = "horizontal" | "vertical" | "3x4" | "4x3";
 
 export type DateRangeOption = 'year-ago' | '2021' | '2022' | '2023' | '2024' | '2025';

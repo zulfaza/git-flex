@@ -1,11 +1,17 @@
 import html2canvas from "html2canvas-pro"
 import { generateSVG } from "@/lib/generateSVG"
 import type { ContributionGridCell } from "@/lib/githubApi"
-import type { CustomThemeColors, Layout } from "@/types/calendar"
+import type {
+  CustomThemeColors,
+  ExportFormat,
+  ExportScale,
+  Layout,
+} from "@/types/calendar"
 
 interface ExportCalendarParams {
   calendarRef: React.RefObject<HTMLDivElement | null>
-  exportFormat: "png" | "svg"
+  exportFormat: ExportFormat
+  exportScale: ExportScale
   layout: Layout
   squareSize: number
   gridData: (ContributionGridCell | null)[][]
@@ -13,9 +19,36 @@ interface ExportCalendarParams {
   borderRadius: number
 }
 
+const getExportButton = () => {
+  const exportBtn = document.querySelector("[data-export-btn]")
+
+  if (exportBtn instanceof HTMLButtonElement) {
+    return exportBtn
+  }
+
+  return null
+}
+
+const setExportButtonState = (
+  isExporting: boolean,
+  exportFormat: ExportFormat,
+) => {
+  const exportBtn = getExportButton()
+
+  if (!exportBtn) {
+    return
+  }
+
+  exportBtn.textContent = isExporting
+    ? "Exporting..."
+    : `Export ${exportFormat.toUpperCase()}`
+  exportBtn.disabled = isExporting
+}
+
 export const exportCalendar = async ({
   calendarRef,
   exportFormat,
+  exportScale,
   layout,
   squareSize,
   gridData,
@@ -26,15 +59,9 @@ export const exportCalendar = async ({
     return
   }
 
-  try {
-    const exportBtn = document.querySelector(
-      "[data-export-btn]",
-    ) as HTMLButtonElement
-    {
-      exportBtn.textContent = "Exporting..."
-      exportBtn.disabled = true
-    }
+  setExportButtonState(true, exportFormat)
 
+  try {
     if (exportFormat === "svg") {
       const svgContent = generateSVG({
         layout,
@@ -53,32 +80,21 @@ export const exportCalendar = async ({
     } else {
       const canvas = await html2canvas(calendarRef.current, {
         backgroundColor: "#1f2937",
-        scale: 2,
+        scale: exportScale,
         useCORS: true,
         allowTaint: true,
       })
 
       const dataUrl = canvas.toDataURL("image/png", 1.0)
       const link = document.createElement("a")
-      link.download = `contribution-calendar-${Date.now()}.png`
+      link.download = `contribution-calendar-${Date.now()}@${exportScale}x.png`
       link.href = dataUrl
       link.click()
-    }
-
-    if (exportBtn) {
-      exportBtn.textContent = `Export ${exportFormat.toUpperCase()}`
-      exportBtn.disabled = false
     }
   } catch (error) {
     console.error("Export failed:", error)
     alert("Export failed. Please try again.")
-
-    const exportBtn = document.querySelector(
-      "[data-export-btn]",
-    ) as HTMLButtonElement
-    if (exportBtn) {
-      exportBtn.textContent = `Export ${exportFormat.toUpperCase()}`
-      exportBtn.disabled = false
-    }
+  } finally {
+    setExportButtonState(false, exportFormat)
   }
 }
