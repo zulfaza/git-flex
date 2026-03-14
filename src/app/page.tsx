@@ -43,7 +43,7 @@ export default function Home() {
         <span>© {new Date().getFullYear()} GitFlex</span>
         <span className="hidden md:inline">•</span>
         <Link
-          href="https://github.com"
+          href="https://github.com/zulfaza/git-flex"
           className="transition-colors hover:text-foreground border-b border-transparent hover:border-current"
         >
           Github
