@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Archivo_Black, Space_Grotesk } from 'next/font/google'
+import Script from 'next/script'
 
 import Providers from '@/components/Providers'
 
@@ -58,6 +59,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <Script
+          async
+          src='https://www.googletagmanager.com/gtag/js?id=G-XJX0BJSEMP'
+          strategy='afterInteractive'
+        />
+        <Script id='google-analytics' strategy='afterInteractive'>
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-XJX0BJSEMP');
+          `}
+        </Script>
+      </head>
       <body
         className={`${archivoBlack.variable} ${space.variable} antialiased`}
       >
